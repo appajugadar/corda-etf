@@ -1,10 +1,7 @@
 package com.cts.corda.etf.flow;
 
 import co.paralleluniverse.fibers.Suspendable;
-import com.cts.corda.etf.contract.BuyContract;
-import com.cts.corda.etf.contract.SellContract;
 import com.cts.corda.etf.contract.SettlementContract;
-import com.cts.corda.etf.state.SecurityBuyState;
 import com.cts.corda.etf.state.SecuritySellState;
 import com.google.common.collect.Sets;
 import net.corda.core.contracts.Command;
@@ -23,8 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.cts.corda.etf.contract.BuyContract.BUY_SECURITY_CONTRACT_ID;
-import static com.cts.corda.etf.contract.SellContract.SELL_SECURITY_CONTRACT_ID;
 import static com.cts.corda.etf.contract.SettlementContract.Settlement_SECURITY_CONTRACT_ID;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 
@@ -49,10 +44,10 @@ public class APSellCompletionFlow extends FlowLogic<SignedTransaction> {
         ContractState output = stx.getTx().getOutputs().get(0).getData();
         SecuritySellState newSellState = (SecuritySellState) output;
 
-                final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
-                List<Party> ls = new ArrayList<>();
-                ls.add(newSellState.getBuyer());
-                ls.add(newSellState.getSeller());
+        final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
+        List<Party> ls = new ArrayList<>();
+        ls.add(newSellState.getBuyer());
+        ls.add(newSellState.getSeller());
 
         final Command<SettlementContract.Commands.Create> txCommand = new Command<>(new SettlementContract.Commands.Create(),
                 ls.stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()
@@ -64,9 +59,9 @@ public class APSellCompletionFlow extends FlowLogic<SignedTransaction> {
         txBuilder.verify(getServiceHub());
         final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
 
-        logger.info("newSellState.getBuyer() "+(newSellState.getBuyer()));
+        logger.info("newSellState.getBuyer() " + (newSellState.getBuyer()));
         FlowSession buyerSession = initiateFlow(newSellState.getBuyer());
-        logger.info("buyerSession is null "+(buyerSession==null));
+        logger.info("buyerSession is null " + (buyerSession == null));
 
         final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx,
                 Sets.newHashSet(buyerSession), CollectSignaturesFlow.Companion.tracker()));

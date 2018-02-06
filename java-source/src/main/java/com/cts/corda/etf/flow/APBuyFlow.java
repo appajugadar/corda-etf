@@ -3,11 +3,8 @@ package com.cts.corda.etf.flow;
 import co.paralleluniverse.fibers.Suspendable;
 import com.cts.corda.etf.contract.BuyContract;
 import com.cts.corda.etf.state.SecurityBuyState;
-import com.cts.corda.etf.util.SerializationHelper;
 import com.google.common.collect.Sets;
-import net.corda.confidential.IdentitySyncFlow;
 import net.corda.core.contracts.Command;
-import net.corda.core.contracts.ContractState;
 import net.corda.core.contracts.StateAndContract;
 import net.corda.core.flows.*;
 import net.corda.core.identity.AbstractParty;
@@ -15,14 +12,12 @@ import net.corda.core.identity.Party;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.ProgressTracker;
-import net.corda.core.utilities.UntrustworthyData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.stream.Collectors;
 
 import static com.cts.corda.etf.contract.BuyContract.BUY_SECURITY_CONTRACT_ID;
-import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 
 @InitiatingFlow
@@ -131,7 +126,7 @@ public class APBuyFlow extends FlowLogic<SignedTransaction> {
         // Stage 5.
         progressTracker.setCurrentStep(FINALISING_TRANSACTION);
 
-      //  subFlow(new APBuySubFlow(depositorySession, securityBuyState));
+        //  subFlow(new APBuySubFlow(depositorySession, securityBuyState));
         //
         return subFlow(new FinalityFlow(fullySignedTx));
     }
@@ -143,7 +138,7 @@ public class APBuyFlow extends FlowLogic<SignedTransaction> {
         private final FlowSession flowSession;
         private final SecurityBuyState securityBuyState;
 
-        public APBuySubFlow(FlowSession flowSession,SecurityBuyState securityBuyState) {
+        public APBuySubFlow(FlowSession flowSession, SecurityBuyState securityBuyState) {
             this.flowSession = flowSession;
             this.securityBuyState = securityBuyState;
             System.out.println("Inside APBuySubFlow called by " + flowSession.getCounterparty());
@@ -156,7 +151,7 @@ public class APBuyFlow extends FlowLogic<SignedTransaction> {
             final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
             Party buyer = getServiceHub().getMyInfo().getLegalIdentities().get(0);
 
-           // SecurityBuyState securityBuyState = new SecurityBuyState(iouValue, securityName, "BUY_MATCH", buyer, depositoryParty);
+            // SecurityBuyState securityBuyState = new SecurityBuyState(iouValue, securityName, "BUY_MATCH", buyer, depositoryParty);
             securityBuyState.setStatus("BUY_MATCH");
 
             final Command<BuyContract.Commands.Create> txCommand = new Command<>(new BuyContract.Commands.Create(),

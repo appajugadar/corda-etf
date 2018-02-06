@@ -27,6 +27,7 @@ public class SecurityBuyState implements LinearState, QueryableState {
     private Party buyer;
     private Party depository;
     private String status;
+
     /**
      * @param quantity the quantity of the IOU.
      * @param seller   the party issuing the IOU.
@@ -43,6 +44,7 @@ public class SecurityBuyState implements LinearState, QueryableState {
         this.depository = depository;
         this.linearId = new UniqueIdentifier();
     }
+
     public SecurityBuyState(Integer quantity, String securityName, String status,
                             Party buyer,
                             Party depository) {
@@ -114,12 +116,13 @@ public class SecurityBuyState implements LinearState, QueryableState {
         this.status = status;
     }
 
-    public void setLinearId(UniqueIdentifier linearId) {
-        this.linearId = linearId;
-    }
     @Override
     public UniqueIdentifier getLinearId() {
         return linearId;
+    }
+
+    public void setLinearId(UniqueIdentifier linearId) {
+        this.linearId = linearId;
     }
 
     @Override

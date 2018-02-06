@@ -56,7 +56,7 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
         logger.info("DepositoryBuyFlow flowSession " + flowSession.getCounterpartyFlowInfo());
         logger.info("Sending back SecuritySellState to APBuy Flow " + securitySellState);
 
-        if(securitySellState != null){
+        if (securitySellState != null) {
             //update sell state
 
 
@@ -71,7 +71,7 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
             txBuilder.verify(getServiceHub());
             // Sign the transaction.
             final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
-            logger.info("securitySellState.getSeller() "+securitySellState.getSeller());
+            logger.info("securitySellState.getSeller() " + securitySellState.getSeller());
             FlowSession sellerSession = initiateFlow(securitySellState.getSeller());
             final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(sellerSession), CollectSignaturesFlow.Companion.tracker()));
 
@@ -79,12 +79,12 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
             output.setSeller(securitySellState.getSeller());
             output.setStatus("BUY_MATCHED");
             output.setLinearId(securitySellState.getLinearId());
-          //  flowSession.send(output);
+            //  flowSession.send(output);
 
             // Notarise and record the transaction in both parties' vaults.
             subFlow(new FinalityFlow(fullySignedTx));
-        }else{
-          //  flowSession.send(new SecurityBuyState());
+        } else {
+            //  flowSession.send(new SecurityBuyState());
         }
 
         SignedTransaction tx = subFlow(new SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker()));
@@ -114,7 +114,7 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
                 //
                 SecurityBuyState newBuyState = (SecurityBuyState) output;
 
-                if(securitySellState!=null){
+                if (securitySellState != null) {
                     newBuyState.setSeller(securitySellState.getSeller());
                     newBuyState.setStatus("BUY_MATCHED");
                 }

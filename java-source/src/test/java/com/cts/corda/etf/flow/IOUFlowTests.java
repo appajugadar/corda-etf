@@ -11,9 +11,10 @@ import org.junit.rules.ExpectedException;
 
 import static net.corda.testing.CoreTestUtils.setCordappPackages;
 import static net.corda.testing.CoreTestUtils.unsetCordappPackages;
-import static org.junit.Assert.assertEquals;
 
 public class IOUFlowTests {
+    @Rule
+    public final ExpectedException exception = ExpectedException.none();
     private MockNetwork network;
     private StartedNode<MockNode> a;
     private StartedNode<MockNode> b;
@@ -37,9 +38,6 @@ public class IOUFlowTests {
         unsetCordappPackages();
         network.stopNodes();
     }
-
-    @Rule
-    public final ExpectedException exception = ExpectedException.none();
 /*
     @Test
     public void flowRejectsInvalidIOUs() throws Exception {

@@ -1,33 +1,18 @@
 package com.cts.corda.etf.flow;
 
 import co.paralleluniverse.fibers.Suspendable;
-import com.cts.corda.etf.contract.SellContract;
-import com.cts.corda.etf.state.SecurityBuyState;
-import com.cts.corda.etf.state.SecuritySellState;
-import com.google.common.collect.Sets;
-import net.corda.core.contracts.Command;
 import net.corda.core.contracts.ContractState;
-import net.corda.core.contracts.StateAndContract;
-import net.corda.core.contracts.StateAndRef;
 import net.corda.core.flows.*;
-import net.corda.core.identity.AbstractParty;
-import net.corda.core.identity.Party;
-import net.corda.core.node.services.Vault;
 import net.corda.core.transactions.SignedTransaction;
-import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.ProgressTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static com.cts.corda.etf.contract.SellContract.SELL_SECURITY_CONTRACT_ID;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 @InitiatedBy(APSellCompletionFlow.class)
 @InitiatingFlow
-public class ApBuySettleFlow  extends FlowLogic<SignedTransaction> {
+public class ApBuySettleFlow extends FlowLogic<SignedTransaction> {
 
     static private final Logger logger = LoggerFactory.getLogger(DepositoryBuyFlow.class);
     private final FlowSession flowSession;
@@ -73,7 +58,7 @@ public class ApBuySettleFlow  extends FlowLogic<SignedTransaction> {
                 logger.info("ApBuySettleFlow output " + output);
 
 
-             //   require.using("This must be an SecurityBuy transaction.", output instanceof SecurityBuyState);
+                //   require.using("This must be an SecurityBuy transaction.", output instanceof SecurityBuyState);
 
              /*   //
                 Vault.Page<SecuritySellState> results = getServiceHub().getVaultService().queryBy(SecuritySellState.class);

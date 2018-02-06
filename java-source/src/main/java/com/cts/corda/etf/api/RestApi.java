@@ -1,10 +1,9 @@
 package com.cts.corda.etf.api;
 
+import com.cts.corda.etf.contract.SecurityStock;
 import com.cts.corda.etf.flow.APBuyFlow;
-import com.cts.corda.etf.contract.EtfStock;
 import com.cts.corda.etf.flow.APSellFlow;
-import com.cts.corda.etf.flow.EtfSellerFlow;
-import com.cts.corda.etf.flow.EtfStockIssueFlow;
+import com.cts.corda.etf.flows.SecurityIssueFlow;
 import com.cts.corda.etf.state.SecurityBuyState;
 import com.cts.corda.etf.state.SecuritySellState;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,6 +19,8 @@ import net.corda.core.messaging.FlowHandle;
 import net.corda.core.messaging.FlowProgressHandle;
 import net.corda.core.node.NodeInfo;
 import net.corda.core.transactions.SignedTransaction;
+import net.corda.core.utilities.OpaqueBytes;
+import net.corda.finance.flows.AbstractCashFlow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,24 +130,24 @@ public class RestApi {
 
 
     @GET
-    @Path("checkEtfStockBalance")
-    public Response checkEtfStockBalance() {
+    @Path("security-balance")
+    public Response checkSecurityStockBalance() {
         final List<Party> notaries = rpcOps.notaryIdentities();
         if (notaries.isEmpty()) {
             throw new IllegalStateException("Could not find a notary.");
         }
 
         try {
-            List<StateAndRef<EtfStock.State>> etfTradeStatesQueryResp = rpcOps.vaultQuery(EtfStock.State.class).getStates();
+            List<StateAndRef<SecurityStock.State>> etfTradeStatesQueryResp = rpcOps.vaultQuery(SecurityStock.State.class).getStates();
             Map<String, Long> securityBalanceMap = new HashMap<>();
 
-            for (StateAndRef<EtfStock.State> stateAndRef : etfTradeStatesQueryResp) {
-                EtfStock.State etfTradeState = stateAndRef.getState().getData();
+            for (StateAndRef<SecurityStock.State> stateAndRef : etfTradeStatesQueryResp) {
+                SecurityStock.State etfTradeState = stateAndRef.getState().getData();
                 Long quantity = etfTradeState.getQuantity();
-                if (securityBalanceMap.containsKey(etfTradeState.getEtfName())) {
-                    quantity = quantity + securityBalanceMap.get(etfTradeState.getEtfName());
+                if (securityBalanceMap.containsKey(etfTradeState.getSecurityName())) {
+                    quantity = quantity + securityBalanceMap.get(etfTradeState.getSecurityName());
                 }
-                securityBalanceMap.put(etfTradeState.getEtfName(), quantity);
+                securityBalanceMap.put(etfTradeState.getSecurityName(), quantity);
             }
 
             logger.info("etfTradeStates for checkEtfBalance size " + securityBalanceMap.size());
@@ -163,46 +164,46 @@ public class RestApi {
     }
 
     @GET
-    @Path("self-issue-etf")
-    public Response selfIssueEtfStock(@QueryParam(value = "quantity") int quantity, @QueryParam(value = "etfName") String etfName) throws ExecutionException, InterruptedException {
-        logger.info("Inputs for self issue security etfName " + etfName + "   quantity " + quantity);
-        final List<Party> notaries = rpcOps.notaryIdentities();
-        if (notaries.isEmpty()) {
-            throw new IllegalStateException("Could not find a notary.");
-        }
-        FlowHandle<SignedTransaction> flowHandle = rpcOps.startFlowDynamic(EtfStockIssueFlow.class, new Long(quantity), etfName);
-
-        SignedTransaction result = flowHandle.getReturnValue().get();
-        logger.info("Received resp from flow " + result);
-
-        return Response.status(CREATED).entity("SUCCESS").build();
+    @Path("cash-balance")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<Currency, Amount<Currency>> cashBalances() {
+        return net.corda.finance.contracts.GetBalances.getCashBalances(rpcOps);
     }
-
 
     @GET
-    @Path("sell-etf-to-party")
-    public Response sellEtfToParty(@QueryParam(value = "amount") int amount,
-                                   @QueryParam(value = "currency") String currency, @QueryParam(value = "buyerParty") String buyerParty) throws ExecutionException, InterruptedException {
-
-        logger.info("Inputs for sell etf etfName " + amount + "   currency " + currency + "   buyerParty " + buyerParty);
+    @Path("self-issue-cash")
+    public Response selfIssueCash(@QueryParam(value = "amount") int amount, @QueryParam(value = "currency") String currency) throws ExecutionException, InterruptedException {
         final List<Party> notaries = rpcOps.notaryIdentities();
-
         if (notaries.isEmpty()) {
             throw new IllegalStateException("Could not find a notary.");
         }
+        FlowHandle<AbstractCashFlow.Result> flowHandle = rpcOps.startFlowDynamic(net.corda.finance.flows.CashIssueFlow.class,
+                new Amount<Currency>(amount, Currency.getInstance(currency)),
+                OpaqueBytes.of("40".getBytes()),
+                notaries.get(0));
 
-        Party buyer = getPartyWithName(new CordaX500Name(buyerParty, "London", "GB"));
 
-        logger.info("buyer " + buyer.getName());
-        //FlowHandle<SignedTransaction> flowHandle = rpcOps.startFlowDynamic(EtfSellerFlow.class, buyer,new Amount<Currency>(amount, Currency.getInstance(currency)));
+        AbstractCashFlow.Result result = flowHandle.getReturnValue().get();
+        logger.info("Received resp from flow " + result.getRecipient());
+        return Response.status(CREATED).entity("SUCCESS").build();
+    }
 
-        FlowHandle<SignedTransaction> flowHandle = rpcOps.startTrackedFlowDynamic(EtfSellerFlow.class, buyer,
-                new Amount<Currency>(amount, Currency.getInstance(currency)));
+    @GET
+    @Path("self-issue-security")
+    public Response selfIssueEtfStock(@QueryParam(value = "quantity") int quantity, @QueryParam(value = "securityName") String securityName) throws ExecutionException, InterruptedException {
+        logger.info("Inputs for self issue security  " + securityName + "   quantity " + quantity);
+        final List<Party> notaries = rpcOps.notaryIdentities();
+        if (notaries.isEmpty()) {
+            throw new IllegalStateException("Could not find a notary.");
+        }
+        FlowHandle<SignedTransaction> flowHandle = rpcOps.startFlowDynamic(SecurityIssueFlow.class, new Long(quantity), securityName);
 
         SignedTransaction result = flowHandle.getReturnValue().get();
         logger.info("Received resp from flow " + result);
+
         return Response.status(CREATED).entity("SUCCESS").build();
     }
+
 
     private Party getPartyWithName(CordaX500Name x500Name) {
         return rpcOps.wellKnownPartyFromX500Name(x500Name);//;partiesFromName(name, false).toArray()[0];

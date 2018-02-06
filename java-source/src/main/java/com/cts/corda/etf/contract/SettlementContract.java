@@ -4,10 +4,7 @@ import com.cts.corda.etf.state.SecuritySellState;
 import net.corda.core.contracts.CommandData;
 import net.corda.core.contracts.CommandWithParties;
 import net.corda.core.contracts.Contract;
-import net.corda.core.identity.AbstractParty;
 import net.corda.core.transactions.LedgerTransaction;
-
-import java.util.stream.Collectors;
 
 import static net.corda.core.contracts.ContractsDSL.requireSingleCommand;
 import static net.corda.core.contracts.ContractsDSL.requireThat;

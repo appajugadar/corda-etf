@@ -9,7 +9,6 @@ import org.junit.Before;
 import java.security.PublicKey;
 
 import static net.corda.testing.CoreTestUtils.*;
-import static net.corda.testing.NodeTestUtils.ledger;
 
 public class BuyContractTests {
     static private final Party miniCorp = getMINI_CORP();

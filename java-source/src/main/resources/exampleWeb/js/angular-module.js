@@ -23,36 +23,59 @@ app.config(['$qProvider', function ($qProvider) {
     $qProvider.errorOnUnhandledRejections(false);
 }]);
 
-app.controller('DemoAppController', function($http, $location, $uibModal) {
+app.controller('DemoAppController', function ($http, $location, $uibModal) {
     const demoApp = this;
 
     // We identify the node.
     const apiBaseURL = "/api/example/";
     let peers = [];
 
-    $http.get(apiBaseURL + "me").then((response) => demoApp.thisNode = response.data.me);
+    $http.get(apiBaseURL + "me").then((response) = > demoApp.thisNode = response.data.me
+)
+    ;
 
-    $http.get(apiBaseURL + "peers").then((response) => peers = response.data.peers);
+    $http.get(apiBaseURL + "peers").then((response) = > peers = response.data.peers
+)
+    ;
 
-    demoApp.openModal = () => {
+    demoApp.openModal = () =
+>
+    {
         const modalInstance = $uibModal.open({
             templateUrl: 'demoAppModal.html',
             controller: 'ModalInstanceCtrl',
             controllerAs: 'modalInstance',
             resolve: {
-                demoApp: () => demoApp,
-                apiBaseURL: () => apiBaseURL,
-                peers: () => peers
-            }
-        });
+                demoApp: () = > demoApp,
+            apiBaseURL: () = > apiBaseURL,
+            peers
+    :
+        () =
+    >
+        peers
+    }
+    })
+        ;
 
-        modalInstance.result.then(() => {}, () => {});
-    };
+        modalInstance.result.then(() = > {}, () =
+    >
+        {
+        }
+    )
+        ;
+    }
+    ;
 
-    demoApp.getIOUs = () => $http.get(apiBaseURL + "ious")
-        .then((response) => demoApp.ious = Object.keys(response.data)
-            .map((key) => response.data[key].state.data)
-            .reverse());
+    demoApp.getIOUs = () =
+>
+    $http.get(apiBaseURL + "ious")
+        .then((response) = > demoApp.ious = Object.keys(response.data)
+        .map((key) = > response.data[key].state.data
+)
+.
+    reverse()
+)
+    ;
 
     demoApp.getIOUs();
 });
@@ -65,7 +88,9 @@ app.controller('ModalInstanceCtrl', function ($http, $location, $uibModalInstanc
     modalInstance.formError = false;
 
     // Validate and create IOU.
-    modalInstance.create = () => {
+    modalInstance.create = () =
+>
+    {
         if (invalidFormInput()) {
             modalInstance.formError = true;
         } else {
@@ -77,31 +102,47 @@ app.controller('ModalInstanceCtrl', function ($http, $location, $uibModalInstanc
 
             // Create PO and handle success / fail responses.
             $http.put(createIOUEndpoint).then(
-                (result) => {
-                    modalInstance.displayMessage(result);
-                    demoApp.getIOUs();
-                },
-                (result) => {
-                    modalInstance.displayMessage(result);
-                }
-            );
+                (result) = > {
+                modalInstance.displayMessage(result);
+            demoApp.getIOUs();
+        },
+            (result) =
+        >
+            {
+                modalInstance.displayMessage(result);
+            }
+        )
+            ;
         }
-    };
+    }
+    ;
 
-    modalInstance.displayMessage = (message) => {
+    modalInstance.displayMessage = (message) =
+>
+    {
         const modalInstanceTwo = $uibModal.open({
             templateUrl: 'messageContent.html',
             controller: 'messageCtrl',
             controllerAs: 'modalInstanceTwo',
-            resolve: { message: () => message }
-        });
+            resolve: {message: () = > message
+        }
+    })
+        ;
 
         // No behaviour on close / dismiss.
-        modalInstanceTwo.result.then(() => {}, () => {});
-    };
+        modalInstanceTwo.result.then(() = > {}, () =
+    >
+        {
+        }
+    )
+        ;
+    }
+    ;
 
     // Close create IOU modal dialogue.
-    modalInstance.cancel = () => $uibModalInstance.dismiss();
+    modalInstance.cancel = () =
+>
+    $uibModalInstance.dismiss();
 
     // Validate the IOU.
     function invalidFormInput() {

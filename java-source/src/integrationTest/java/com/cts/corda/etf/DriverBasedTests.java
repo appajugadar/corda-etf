@@ -89,7 +89,7 @@ public class DriverBasedTests {
                     OkHttpClient client = new OkHttpClient();
                     Response response = client.newCall(request).execute();
 
-                    assert(response.body().string().contains(nodeNames.get(idx).toString()));
+                    assert (response.body().string().contains(nodeNames.get(idx).toString()));
                 }
             } catch (Exception e) {
                 throw new RuntimeException("Caught exception during test", e);

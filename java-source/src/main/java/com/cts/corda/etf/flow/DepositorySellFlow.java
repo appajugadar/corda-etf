@@ -57,7 +57,7 @@ public class DepositorySellFlow extends FlowLogic<SignedTransaction> {
 
         //flowSession.send(securityBuyState);
 
-        if(securityBuyState!=null){
+        if (securityBuyState != null) {
 
             //update sell state
             securityBuyState.setSeller(flowSession.getCounterparty());
@@ -72,13 +72,13 @@ public class DepositorySellFlow extends FlowLogic<SignedTransaction> {
             txBuilder.verify(getServiceHub());
             // Sign the transaction.
             final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
-            logger.info("securityBuyState.getBuyer() "+securityBuyState.getBuyer());
+            logger.info("securityBuyState.getBuyer() " + securityBuyState.getBuyer());
             FlowSession sellerSession = initiateFlow(securityBuyState.getBuyer());
             final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(sellerSession), CollectSignaturesFlow.Companion.tracker()));
             // Notarise and record the transaction in both parties' vaults.
             subFlow(new FinalityFlow(fullySignedTx));
 
-        }else{
+        } else {
             logger.info("No buy request found ");
         }
 

@@ -51,8 +51,9 @@ public class IntegrationTest {
 
         Set<ServiceInfo> notaryServices = ImmutableSet.of(new ServiceInfo(SimpleNotaryService.Companion.getType(), null));
 
-        driver(new DriverParameters().setIsDebug(true).setStartNodesInProcess(true).setExtraCordappPackagesToScan(ImmutableList.of(
-                "com.example.contract")), dsl -> {
+        driver(new DriverParameters().setIsDebug(true).setStartNodesInProcess(true).setExtraCordappPackagesToScan(
+                ImmutableList.of("com.example.contract","net.corda.finance.contracts.asset","net.corda.finance.contracts")),
+                dsl -> {
             // This starts three nodes simultaneously with startNode, which returns a future that completes when the node
             // has completed startup. Then these are all resolved with getOrThrow which returns the NodeHandle list.
             List<CordaFuture<NodeHandle>> handles = ImmutableList.of(
@@ -80,7 +81,6 @@ public class IntegrationTest {
                 log.info("ap1Handle address: " + ap1Handle1.get().getListenAddress());
                 log.info("ap2Handle address: " + ap2Handle1.get().getListenAddress());
                 log.info("depositoryHandle address: " + depositoryHandle1.get().getListenAddress());
-
 
 
                 dsl.waitForAllNodesToFinish();
