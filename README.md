@@ -16,3 +16,9 @@ http://localhost:10007/api/rest/self-issue-cash?amount=100&currency=GBP
 http://localhost:10007/api/rest/self-issue-security?quantity=100&securityName=INF
 
 http://localhost:10007/api/rest/security-balance
+
+
+
+JVM Param for testcase
+
+-ea -javaagent:../lib/quasar.jar
