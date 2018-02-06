@@ -25,26 +25,25 @@ import java.util.stream.Collectors;
 import static com.cts.corda.etf.contract.SellContract.SELL_SECURITY_CONTRACT_ID;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 
-
-@InitiatedBy(APBuyFlow.class)
+@InitiatedBy(APSellCompletionFlow.class)
 @InitiatingFlow
-public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
+public class ApBuySettleFlow  extends FlowLogic<SignedTransaction> {
 
     static private final Logger logger = LoggerFactory.getLogger(DepositoryBuyFlow.class);
     private final FlowSession flowSession;
 
-    public DepositoryBuyFlow(FlowSession flowSession) {
+    public ApBuySettleFlow(FlowSession flowSession) {
         this.flowSession = flowSession;
-        System.out.println("Inside DepositoryBuyFlow called by " + flowSession.getCounterparty());
+        System.out.println("Inside ApBuySettleFlow called by " + flowSession.getCounterparty());
     }
 
     @Suspendable
     @Override
     public SignedTransaction call() throws FlowException {
 
-        logger.info("DepositoryBuyFlow inside call method ");
+        logger.info("ApBuySettleFlow inside call method ");
 
-        //check vault for sell states and if found then return
+       /* //check vault for sell states and if found then return
         Vault.Page<SecuritySellState> results = getServiceHub().getVaultService().queryBy(SecuritySellState.class);
         List<StateAndRef<SecuritySellState>> ref = results.getStates();
         SecuritySellState securitySellState = null;
@@ -53,41 +52,11 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
             securitySellState = stateref.getState().getData();
         }
 
-        logger.info("DepositoryBuyFlow flowSession " + flowSession.getCounterpartyFlowInfo());
+        logger.info("ApBuySettleFlow flowSession " + flowSession.getCounterpartyFlowInfo());
         logger.info("Sending back SecuritySellState to APBuy Flow " + securitySellState);
+*/
 
-        if(securitySellState != null){
-            //update sell state
-
-
-            securitySellState.setBuyer(flowSession.getCounterparty());
-            securitySellState.setStatus("SELL_MATCHED");
-            // Obtain a reference to the notary we want to use.
-            final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
-            final Command<SellContract.Commands.Create> txCommand = new Command<>(new SellContract.Commands.Create(),
-                    securitySellState.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
-            final TransactionBuilder txBuilder = new TransactionBuilder(notary).withItems(new StateAndContract(securitySellState, SELL_SECURITY_CONTRACT_ID), txCommand);
-            // Verify that the transaction is valid.
-            txBuilder.verify(getServiceHub());
-            // Sign the transaction.
-            final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
-            logger.info("securitySellState.getSeller() "+securitySellState.getSeller());
-            FlowSession sellerSession = initiateFlow(securitySellState.getSeller());
-            final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(sellerSession), CollectSignaturesFlow.Companion.tracker()));
-
-            SecurityBuyState output = new SecurityBuyState();
-            output.setSeller(securitySellState.getSeller());
-            output.setStatus("BUY_MATCHED");
-            output.setLinearId(securitySellState.getLinearId());
-          //  flowSession.send(output);
-
-            // Notarise and record the transaction in both parties' vaults.
-            subFlow(new FinalityFlow(fullySignedTx));
-        }else{
-          //  flowSession.send(new SecurityBuyState());
-        }
-
-        SignedTransaction tx = subFlow(new SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker()));
+        SignedTransaction tx = subFlow(new ApBuySettleFlow.SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker()));
         return tx;
     }
 
@@ -101,9 +70,12 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
         protected void checkTransaction(SignedTransaction stx) {
             requireThat(require -> {
                 ContractState output = stx.getTx().getOutputs().get(0).getData();
-                require.using("This must be an SecurityBuy transaction.", output instanceof SecurityBuyState);
+                logger.info("ApBuySettleFlow output " + output);
 
-                //
+
+             //   require.using("This must be an SecurityBuy transaction.", output instanceof SecurityBuyState);
+
+             /*   //
                 Vault.Page<SecuritySellState> results = getServiceHub().getVaultService().queryBy(SecuritySellState.class);
                 List<StateAndRef<SecuritySellState>> ref = results.getStates();
                 SecuritySellState securitySellState = null;
@@ -122,9 +94,10 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
                 logger.info("Adding new state to o/p");
                 stx.getTx().getOutputStates().add(newBuyState);
 
-                require.using("I won't accept SecurityBuy with a quantity over 100.", newBuyState.getQuantity() <= 100);
+                require.using("I won't accept SecurityBuy with a quantity over 100.", newBuyState.getQuantity() <= 100);*/
                 return null;
             });
         }
     }
 }
+

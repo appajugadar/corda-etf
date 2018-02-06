@@ -108,7 +108,7 @@ public class APBuyFlow extends FlowLogic<SignedTransaction> {
 
         // Notarise and record the transaction in both parties' vaults.
         //subFlow(new FinalityFlow(fullySignedTx));
-
+/*
         UntrustworthyData<SecurityBuyState> output = depositorySession.receive(SecurityBuyState.class);
         SecurityBuyState outPutValue = SerializationHelper.getSecurityBuyState(output);
 
@@ -122,10 +122,11 @@ public class APBuyFlow extends FlowLogic<SignedTransaction> {
             subFlow(new FinalityFlow(fullySignedTx1));
         }else{
 
-        }
+        }*/
 
         // Send the state to the counterparty, and receive it back with their signature.
-        final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(depositorySession), CollectSignaturesFlow.Companion.tracker()));
+        final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx,
+                Sets.newHashSet(depositorySession), CollectSignaturesFlow.Companion.tracker()));
 
         // Stage 5.
         progressTracker.setCurrentStep(FINALISING_TRANSACTION);
