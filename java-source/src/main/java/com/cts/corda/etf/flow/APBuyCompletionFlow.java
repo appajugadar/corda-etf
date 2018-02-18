@@ -1,11 +1,15 @@
 package com.cts.corda.etf.flow;
 
 import co.paralleluniverse.fibers.Suspendable;
+import com.cts.corda.etf.contract.SettlementContract;
 import com.cts.corda.etf.state.SecurityBuyState;
 import com.google.common.collect.Sets;
 import net.corda.core.contracts.Amount;
+import net.corda.core.contracts.Command;
 import net.corda.core.contracts.ContractState;
+import net.corda.core.contracts.StateAndContract;
 import net.corda.core.flows.*;
+import net.corda.core.identity.AbstractParty;
 import net.corda.core.identity.Party;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
@@ -18,12 +22,14 @@ import java.util.ArrayList;
 import java.util.Currency;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import static com.cts.corda.etf.contract.SettlementContract.Settlement_SECURITY_CONTRACT_ID;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 @InitiatingFlow
 @InitiatedBy(DepositorySellFlow.class)
-public class APBuyCompletionFlow extends FlowLogic<SignedTransaction> {
+public class APBuyCompletionFlow extends FlowLogic<String> {
 
     static private final Logger logger = LoggerFactory.getLogger(APBuyCompletionFlow.class);
     private final FlowSession flowSession;
@@ -35,7 +41,7 @@ public class APBuyCompletionFlow extends FlowLogic<SignedTransaction> {
 
     @Suspendable
     @Override
-    public SignedTransaction call() throws FlowException {
+    public String call() throws FlowException {
         logger.info("APBuyCompletionFlow inside call method ");
 
         SignedTransaction stx = subFlow(new APBuyCompletionFlow.SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker()));
@@ -51,17 +57,10 @@ public class APBuyCompletionFlow extends FlowLogic<SignedTransaction> {
         CashPaymentFlow.PaymentRequest paymentRequest = new CashPaymentFlow.PaymentRequest(amount, buyState.getSeller(), false, new HashSet<>());
         subFlow(new CashPaymentFlow(paymentRequest));
 
-        final TransactionBuilder txBuilder = new TransactionBuilder(notary);
-        net.corda.finance.contracts.asset.Cash.generateSpend(getServiceHub(), txBuilder, amount, flowSession.getCounterparty(), new HashSet<>());
-        //
-        final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
         logger.info("securitySellState.getSeller() " + buyState.getSeller());
         FlowSession sellerSession = initiateFlow(buyState.getSeller());
         logger.info("sellerSession.getCounterpartyFlowInfo() " + sellerSession.getCounterpartyFlowInfo());
-
-        final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(sellerSession), CollectSignaturesFlow.Companion.tracker()));
-
-        return subFlow(new FinalityFlow(fullySignedTx));
+        return "Success";
     }
 
     class SignTxFlow extends SignTransactionFlow {
