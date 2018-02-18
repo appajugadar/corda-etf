@@ -25,14 +25,7 @@ public class ApBuySettleFlow extends FlowLogic<SignedTransaction> {
     @Suspendable
     @Override
     public SignedTransaction call() throws FlowException {
-
         logger.info("ApBuySettleFlow inside call method ");
-       /* final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
-        final TransactionBuilder txBuilder = new TransactionBuilder(notary);
-        Amount<Currency> amount = new Amount<Currency>(200, Currency.getInstance("GBP"));
-        net.corda.finance.contracts.asset.Cash.generateSpend(getServiceHub(), txBuilder, amount, flowSession.getCounterparty(), new HashSet<>());
-*/
-
         SignedTransaction tx = subFlow(new ApBuySettleFlow.SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker()));
         return tx;
     }
@@ -48,30 +41,6 @@ public class ApBuySettleFlow extends FlowLogic<SignedTransaction> {
             requireThat(require -> {
                 ContractState output = stx.getTx().getOutputs().get(0).getData();
                 logger.info("ApBuySettleFlow output " + output);
-
-
-                //   require.using("This must be an SecurityBuy transaction.", output instanceof SecurityBuyState);
-
-             /*   //
-                Vault.Page<SecuritySellState> results = getServiceHub().getVaultService().queryBy(SecuritySellState.class);
-                List<StateAndRef<SecuritySellState>> ref = results.getStates();
-                SecuritySellState securitySellState = null;
-
-                for (StateAndRef<SecuritySellState> stateref : ref) {
-                    securitySellState = stateref.getState().getData();
-                }
-                //
-                SecurityBuyState newBuyState = (SecurityBuyState) output;
-
-                if(securitySellState!=null){
-                    newBuyState.setSeller(securitySellState.getSeller());
-                    newBuyState.setStatus("BUY_MATCHED");
-                }
-
-                logger.info("Adding new state to o/p");
-                stx.getTx().getOutputStates().add(newBuyState);
-
-                require.using("I won't accept SecurityBuy with a quantity over 100.", newBuyState.getQuantity() <= 100);*/
                 return null;
             });
         }
