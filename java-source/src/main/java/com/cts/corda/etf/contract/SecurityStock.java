@@ -62,7 +62,7 @@ public class SecurityStock implements Contract {
             if (command.getValue() instanceof Commands.Move) {
                 final CommandWithParties<Commands.Move> cmd = requireSingleCommand(tx.getCommands(), Commands.Move.class);
                 // There should be only a single input due to aggregation above
-                final State input = onlyElementOf(inputs);
+                /*final State input = onlyElementOf(inputs);
 
                 if (!cmd.getSigners().contains(input.getOwner().getOwningKey()))
                     throw new IllegalStateException("Failed requirement: the transaction is signed by the owner of the CP");
@@ -71,6 +71,7 @@ public class SecurityStock implements Contract {
                 if (outputs.size() != 1) {
                     throw new IllegalStateException("the state is propagated");
                 }
+                */
             } else if (command.getValue() instanceof Commands.Issue) {
                 final CommandWithParties<Commands.Issue> cmd = requireSingleCommand(tx.getCommands(), Commands.Issue.class);
                 final State output = onlyElementOf(outputs);

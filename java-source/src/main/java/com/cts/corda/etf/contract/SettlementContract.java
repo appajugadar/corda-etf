@@ -33,10 +33,8 @@ public class SettlementContract implements Contract {
         final CommandWithParties<Commands.Create> command = requireSingleCommand(tx.getCommands(), Commands.Create.class);
         requireThat(require -> {
             // Generic constraints around the IOU transaction.
-            require.using("No inputs should be consumed when issuing an SellRequest.",
-                    tx.getInputs().isEmpty());
-            require.using("Only one output state should be created.",
-                    tx.getOutputs().size() == 1);
+            require.using("No inputs should be consumed when issuing an SellRequest.", tx.getInputs().isEmpty());
+            require.using("Only one output state should be created.", tx.getOutputs().size() == 1);
             final SecuritySellState out = tx.outputsOfType(SecuritySellState.class).get(0);
             require.using("The seller and the depository cannot be the same entity.",
                     out.getSeller() != out.getBuyer());

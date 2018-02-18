@@ -14,7 +14,7 @@ import net.corda.core.utilities.OpaqueBytes;
 import net.corda.core.utilities.ProgressTracker;
 
 import java.util.stream.Collectors;
-import net.corda.core.flows.InitiatingFlow;
+
 import static com.cts.corda.etf.contract.SecurityStock.SECURITY_STOCK_CONTRACT;
 
 @StartableByRPC
@@ -73,8 +73,7 @@ public class SecurityIssueFlow extends FlowLogic<SignedTransaction> {
         // Step 2. build tx.
         progressTracker.setCurrentStep(BUILDING);
         final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
-        final TransactionBuilder txBuilder = new TransactionBuilder(notary)
-                .withItems(new StateAndContract(etfTradeState, SECURITY_STOCK_CONTRACT), txCommand);
+        final TransactionBuilder txBuilder = new TransactionBuilder(notary).withItems(new StateAndContract(etfTradeState, SECURITY_STOCK_CONTRACT), txCommand);
 
         System.out.println("Inside EtfIssue flow verify tx");
         // Stage 3. verify tx

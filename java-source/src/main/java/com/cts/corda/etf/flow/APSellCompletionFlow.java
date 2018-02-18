@@ -13,6 +13,7 @@ import net.corda.core.identity.Party;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.ProgressTracker;
+import net.corda.finance.flows.TwoPartyTradeFlow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,8 +28,15 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
 @InitiatedBy(DepositoryBuyFlow.class)
 public class APSellCompletionFlow extends FlowLogic<SignedTransaction> {
 
-    static private final Logger logger = LoggerFactory.getLogger(DepositoryBuyFlow.class);
+    static private final Logger logger = LoggerFactory.getLogger(APSellCompletionFlow.class);
     private final FlowSession flowSession;
+    private final ProgressTracker.Step SELF_ISSUING = new ProgressTracker.Step("Got session ID back, issuing and timestamping some commercial paper");
+    private final ProgressTracker.Step TRADING = new ProgressTracker.Step("Starting the trade flow.") {
+        @Override
+        public ProgressTracker childProgressTracker() {
+            return TwoPartyTradeFlow.Seller.Companion.tracker();
+        }
+    };
 
     public APSellCompletionFlow(FlowSession flowSession) {
         this.flowSession = flowSession;
@@ -49,38 +57,28 @@ public class APSellCompletionFlow extends FlowLogic<SignedTransaction> {
         ls.add(newSellState.getBuyer());
         ls.add(newSellState.getSeller());
 
-        final Command<SettlementContract.Commands.Create> txCommand = new Command<>(new SettlementContract.Commands.Create(),
-                ls.stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()
-                ));
-        final TransactionBuilder txBuilder = new TransactionBuilder(notary).withItems(new StateAndContract(newSellState,
-                Settlement_SECURITY_CONTRACT_ID), txCommand);
+        final Command<SettlementContract.Commands.Create> txCommand = new Command<>(new SettlementContract.Commands.Create(), ls.stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
+        final TransactionBuilder txBuilder = new TransactionBuilder(notary).withItems(new StateAndContract(newSellState, Settlement_SECURITY_CONTRACT_ID), txCommand);
 
+
+        //final TransactionBuilder txBuilder = new TransactionBuilder(notary);
         // Verify that the transaction is valid.
-        txBuilder.verify(getServiceHub());
+        //txBuilder.verify(getServiceHub());
+     /*   Amount<Currency> amount = new Amount<Currency>(200, Currency.getInstance("GBP"));
+        net.corda.finance.contracts.asset.Cash.generateSpend(getServiceHub(), txBuilder, amount, newSellState.getBuyer(), new HashSet<>());
+*/
         final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
 
         logger.info("newSellState.getBuyer() " + (newSellState.getBuyer()));
         FlowSession buyerSession = initiateFlow(newSellState.getBuyer());
         logger.info("buyerSession is null " + (buyerSession == null));
 
-        final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx,
-                Sets.newHashSet(buyerSession), CollectSignaturesFlow.Companion.tracker()));
+
+        final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(buyerSession), CollectSignaturesFlow.Companion.tracker()));
 
 
-
-/*
-        SecurityBuyState output = new SecurityBuyState();
-        output.setSeller(securitySellState.getSeller());
-        output.setStatus("BUY_MATCHED");
-        output.setLinearId(securitySellState.getLinearId());
-        buyerSession.send(output);
-*/
-
-        // Notarise and record the transaction in both parties' vaults.
         subFlow(new FinalityFlow(fullySignedTx));
-
-
-        return stx;
+        return fullySignedTx;
     }
 
     class SignTxFlow extends SignTransactionFlow {

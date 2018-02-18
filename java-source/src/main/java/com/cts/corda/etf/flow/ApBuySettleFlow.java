@@ -14,7 +14,7 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
 @InitiatingFlow
 public class ApBuySettleFlow extends FlowLogic<SignedTransaction> {
 
-    static private final Logger logger = LoggerFactory.getLogger(DepositoryBuyFlow.class);
+    static private final Logger logger = LoggerFactory.getLogger(ApBuySettleFlow.class);
     private final FlowSession flowSession;
 
     public ApBuySettleFlow(FlowSession flowSession) {
@@ -27,18 +27,10 @@ public class ApBuySettleFlow extends FlowLogic<SignedTransaction> {
     public SignedTransaction call() throws FlowException {
 
         logger.info("ApBuySettleFlow inside call method ");
-
-       /* //check vault for sell states and if found then return
-        Vault.Page<SecuritySellState> results = getServiceHub().getVaultService().queryBy(SecuritySellState.class);
-        List<StateAndRef<SecuritySellState>> ref = results.getStates();
-        SecuritySellState securitySellState = null;
-
-        for (StateAndRef<SecuritySellState> stateref : ref) {
-            securitySellState = stateref.getState().getData();
-        }
-
-        logger.info("ApBuySettleFlow flowSession " + flowSession.getCounterpartyFlowInfo());
-        logger.info("Sending back SecuritySellState to APBuy Flow " + securitySellState);
+       /* final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
+        final TransactionBuilder txBuilder = new TransactionBuilder(notary);
+        Amount<Currency> amount = new Amount<Currency>(200, Currency.getInstance("GBP"));
+        net.corda.finance.contracts.asset.Cash.generateSpend(getServiceHub(), txBuilder, amount, flowSession.getCounterparty(), new HashSet<>());
 */
 
         SignedTransaction tx = subFlow(new ApBuySettleFlow.SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker()));

@@ -101,40 +101,18 @@ public class APBuyFlow extends FlowLogic<SignedTransaction> {
         progressTracker.setCurrentStep(GATHERING_SIGS);
         FlowSession depositorySession = initiateFlow(depositoryParty);
 
-        // Notarise and record the transaction in both parties' vaults.
-        //subFlow(new FinalityFlow(fullySignedTx));
-/*
-        UntrustworthyData<SecurityBuyState> output = depositorySession.receive(SecurityBuyState.class);
-        SecurityBuyState outPutValue = SerializationHelper.getSecurityBuyState(output);
-
-        if(outPutValue.getStatus() !=null){
-            securityBuyState.setStatus(outPutValue.getStatus());
-            securityBuyState.setSeller(outPutValue.getSeller());
-            final Command<BuyContract.Commands.Create> txCommand1 = new Command<>(new BuyContract.Commands.Create(), securityBuyState.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
-            final TransactionBuilder txBuilder1 = new TransactionBuilder(notary).withItems(new StateAndContract(securityBuyState, BUY_SECURITY_CONTRACT_ID), txCommand1);
-            final SignedTransaction partSignedTx1 = getServiceHub().signInitialTransaction(txBuilder1);
-            final SignedTransaction fullySignedTx1 = subFlow(new CollectSignaturesFlow(partSignedTx1, Sets.newHashSet(depositorySession), CollectSignaturesFlow.Companion.tracker()));
-            subFlow(new FinalityFlow(fullySignedTx1));
-        }else{
-
-        }*/
-
         // Send the state to the counterparty, and receive it back with their signature.
         final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx,
                 Sets.newHashSet(depositorySession), CollectSignaturesFlow.Companion.tracker()));
-
         // Stage 5.
         progressTracker.setCurrentStep(FINALISING_TRANSACTION);
-
-        //  subFlow(new APBuySubFlow(depositorySession, securityBuyState));
-        //
         return subFlow(new FinalityFlow(fullySignedTx));
     }
 
     @InitiatingFlow
     class APBuySubFlow extends FlowLogic<String> {
 
-        private final Logger logger = LoggerFactory.getLogger(DepositoryBuyFlow.class);
+        private final Logger logger = LoggerFactory.getLogger(APBuySubFlow.class);
         private final FlowSession flowSession;
         private final SecurityBuyState securityBuyState;
 
