@@ -29,7 +29,7 @@ http://localhost:10010/api/rest/SellRequests
 
 
 
-Regulator
+Depository
 
 http://localhost:10013/api/rest/SellRequests
 
