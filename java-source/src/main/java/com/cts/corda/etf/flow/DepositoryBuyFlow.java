@@ -4,6 +4,7 @@ import co.paralleluniverse.fibers.Suspendable;
 import com.cts.corda.etf.contract.SellContract;
 import com.cts.corda.etf.state.SecurityBuyState;
 import com.cts.corda.etf.state.SecuritySellState;
+import com.cts.corda.etf.util.RequestHelper;
 import com.google.common.collect.Sets;
 import net.corda.core.contracts.Command;
 import net.corda.core.contracts.ContractState;
@@ -46,12 +47,7 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
 
         //check vault for sell states and if found then return
         Vault.Page<SecuritySellState> results = getServiceHub().getVaultService().queryBy(SecuritySellState.class);
-        List<StateAndRef<SecuritySellState>> ref = results.getStates();
-        SecuritySellState securitySellState = null;
-
-        for (StateAndRef<SecuritySellState> stateref : ref) {
-            securitySellState = stateref.getState().getData();
-        }
+        SecuritySellState securitySellState = RequestHelper.getUnmatchedSecuritySellState(results.getStates());;
 
         logger.info("DepositoryBuyFlow flowSession " + flowSession.getCounterpartyFlowInfo());
         logger.info("Sending back SecuritySellState to APBuy Flow " + securitySellState);

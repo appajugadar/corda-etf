@@ -11,20 +11,20 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 @InitiatedBy(ApSellSettleFlow.class)
 @InitiatingFlow
-public class DipositorySellAcceptorFlow extends FlowLogic<SignedTransaction> {
+public class DepositorySellAcceptorFlow extends FlowLogic<SignedTransaction> {
 
     static private final Logger logger = LoggerFactory.getLogger(DepositorySellFlow.class);
     private final FlowSession flowSession;
 
-    public DipositorySellAcceptorFlow(FlowSession flowSession) {
+    public DepositorySellAcceptorFlow(FlowSession flowSession) {
         this.flowSession = flowSession;
-        System.out.println("Inside DipositorySellAcceptorFlow called by " + flowSession.getCounterparty());
+        System.out.println("Inside DepositorySellAcceptorFlow called by " + flowSession.getCounterparty());
     }
 
     @Suspendable
     @Override
     public SignedTransaction call() throws FlowException {
-        logger.info("DipositorySellAcceptorFlow inside call method ");
+        logger.info("DepositorySellAcceptorFlow inside call method ");
         SignedTransaction stx = subFlow(new SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker()));
         return stx;
     }
