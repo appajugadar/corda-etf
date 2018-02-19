@@ -47,7 +47,8 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
 
         //check vault for sell states and if found then return
         Vault.Page<SecuritySellState> results = getServiceHub().getVaultService().queryBy(SecuritySellState.class);
-        SecuritySellState securitySellState = RequestHelper.getUnmatchedSecuritySellState(results.getStates());;
+        SecuritySellState securitySellState = RequestHelper.getUnmatchedSecuritySellState(results.getStates());
+        ;
 
         logger.info("DepositoryBuyFlow flowSession " + flowSession.getCounterpartyFlowInfo());
         logger.info("Sending back SecuritySellState to APBuy Flow " + securitySellState);

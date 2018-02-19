@@ -45,7 +45,7 @@ public class APBuyCompletionFlow extends FlowLogic<String> {
         ls.add(buyState.getBuyer());
         ls.add(buyState.getSeller());
 
-        Amount<Currency> amount = new Amount<Currency>(buyState.getQuantity()*100, Currency.getInstance("GBP"));
+        Amount<Currency> amount = new Amount<Currency>(buyState.getQuantity() * 100, Currency.getInstance("GBP"));
         CashPaymentFlow.PaymentRequest paymentRequest = new CashPaymentFlow.PaymentRequest(amount, buyState.getSeller(), false, new HashSet<>());
         subFlow(new CashPaymentFlow(paymentRequest));
 
@@ -79,10 +79,10 @@ public class APBuyCompletionFlow extends FlowLogic<String> {
     }
 
 
-
     @InitiatingFlow
     public class ReportToRegulatorFlow extends FlowLogic<String> {
         private final SignedTransaction fullySignedTx;
+
         public ReportToRegulatorFlow(SignedTransaction fullySignedTx) {
             this.fullySignedTx = fullySignedTx;
             System.out.println("Inside ReportToRegulatorFlow for BuyRequest called by ");
@@ -91,14 +91,13 @@ public class APBuyCompletionFlow extends FlowLogic<String> {
         @Override
         @Suspendable
         public String call() throws FlowException {
-            System.out.println("Inside ReportToRegulatorFlow for BuyRequest call method " );
-            Party regulator = (Party)getServiceHub().getIdentityService().partiesFromName("Regulator", true).toArray()[0];
+            System.out.println("Inside ReportToRegulatorFlow for BuyRequest call method ");
+            Party regulator = (Party) getServiceHub().getIdentityService().partiesFromName("Regulator", true).toArray()[0];
             FlowSession session = initiateFlow(regulator);
             subFlow(new SendTransactionFlow(session, fullySignedTx));
             return "Success";
         }
     }
-
 
 
 }

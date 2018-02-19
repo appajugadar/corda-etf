@@ -12,7 +12,6 @@ import net.corda.core.contracts.StateAndRef;
 import net.corda.core.flows.*;
 import net.corda.core.identity.AbstractParty;
 import net.corda.core.identity.Party;
-import net.corda.core.node.StatesToRecord;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.OpaqueBytes;
@@ -116,6 +115,7 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
     @InitiatingFlow
     public class ReportToRegulatorFlow extends FlowLogic<String> {
         private final SignedTransaction fullySignedTx;
+
         public ReportToRegulatorFlow(SignedTransaction fullySignedTx) {
             this.fullySignedTx = fullySignedTx;
             System.out.println("Inside ReportToRegulatorFlow for SellRequest called by ");
@@ -124,8 +124,8 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
         @Override
         @Suspendable
         public String call() throws FlowException {
-            System.out.println("Inside ReportToRegulatorFlow for SellRequest call method " );
-            Party regulator = (Party)getServiceHub().getIdentityService().partiesFromName("Regulator", true).toArray()[0];
+            System.out.println("Inside ReportToRegulatorFlow for SellRequest call method ");
+            Party regulator = (Party) getServiceHub().getIdentityService().partiesFromName("Regulator", true).toArray()[0];
             FlowSession session = initiateFlow(regulator);
             subFlow(new SendTransactionFlow(session, fullySignedTx));
             return "Success";

@@ -9,7 +9,6 @@ import com.google.common.collect.Sets;
 import net.corda.core.contracts.Command;
 import net.corda.core.contracts.ContractState;
 import net.corda.core.contracts.StateAndContract;
-import net.corda.core.contracts.StateAndRef;
 import net.corda.core.flows.*;
 import net.corda.core.identity.AbstractParty;
 import net.corda.core.identity.Party;
@@ -20,7 +19,6 @@ import net.corda.core.utilities.ProgressTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
 import static net.corda.core.contracts.ContractsDSL.requireThat;
@@ -46,7 +44,8 @@ public class DepositorySellFlow extends FlowLogic<SignedTransaction> {
 
         //check vault for sell states and if found then return
         Vault.Page<SecurityBuyState> results = getServiceHub().getVaultService().queryBy(SecurityBuyState.class);
-        SecurityBuyState securityBuyState = RequestHelper.getUnmatchedSecurityBuyState(results.getStates());;
+        SecurityBuyState securityBuyState = RequestHelper.getUnmatchedSecurityBuyState(results.getStates());
+        ;
 
         logger.info("DepositoryBuyFlow flowSession " + flowSession.getCounterpartyFlowInfo());
         logger.info("Sending back SecuritySellState to APBuy Flow " + securityBuyState);
