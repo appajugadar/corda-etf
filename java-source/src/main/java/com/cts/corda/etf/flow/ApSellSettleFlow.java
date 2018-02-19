@@ -3,7 +3,6 @@ package com.cts.corda.etf.flow;
 import co.paralleluniverse.fibers.Suspendable;
 import com.cts.corda.etf.contract.SecurityStock;
 import com.cts.corda.etf.contract.SellContract;
-import com.cts.corda.etf.state.SecurityBuyState;
 import com.cts.corda.etf.state.SecuritySellState;
 import com.google.common.collect.Sets;
 import net.corda.core.contracts.Command;
@@ -13,14 +12,12 @@ import net.corda.core.contracts.StateAndRef;
 import net.corda.core.flows.*;
 import net.corda.core.identity.AbstractParty;
 import net.corda.core.identity.Party;
-import net.corda.core.node.services.Vault;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.OpaqueBytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -85,7 +82,7 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
 
         for (StateAndRef<SecuritySellState> stateref : ref) {
             securitySellState = stateref.getState().getData();
-            if(securitySellState.getStatus().equals("SELL_MATCHED")){
+            if (securitySellState.getStatus().equals("SELL_MATCHED")) {
 
             }
         }
@@ -105,7 +102,7 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
             // Send the state to the counterparty, and receive it back with their signature.
             final SignedTransaction fullySignedTx2 = subFlow(new CollectSignaturesFlow(partSignedTx2, Sets.newHashSet(depositorySession), CollectSignaturesFlow.Companion.tracker()));
             subFlow(new FinalityFlow(fullySignedTx2));
-      }
+        }
         return fullySignedTx1;
     }
 

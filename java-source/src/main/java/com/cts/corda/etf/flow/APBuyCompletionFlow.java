@@ -1,18 +1,12 @@
 package com.cts.corda.etf.flow;
 
 import co.paralleluniverse.fibers.Suspendable;
-import com.cts.corda.etf.contract.SettlementContract;
 import com.cts.corda.etf.state.SecurityBuyState;
-import com.google.common.collect.Sets;
 import net.corda.core.contracts.Amount;
-import net.corda.core.contracts.Command;
 import net.corda.core.contracts.ContractState;
-import net.corda.core.contracts.StateAndContract;
 import net.corda.core.flows.*;
-import net.corda.core.identity.AbstractParty;
 import net.corda.core.identity.Party;
 import net.corda.core.transactions.SignedTransaction;
-import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.ProgressTracker;
 import net.corda.finance.flows.CashPaymentFlow;
 import org.slf4j.Logger;
@@ -22,9 +16,7 @@ import java.util.ArrayList;
 import java.util.Currency;
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import static com.cts.corda.etf.contract.SettlementContract.Settlement_SECURITY_CONTRACT_ID;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 @InitiatingFlow

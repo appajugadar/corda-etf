@@ -151,9 +151,9 @@ public class RestApi {
             }
 
 
-            for (String key:securityBalanceMap.keySet()) {
+            for (String key : securityBalanceMap.keySet()) {
                 Long val = securityBalanceMap.get(key);
-                if(val==0){
+                if (val == 0) {
                     securityBalanceMap.remove(key);
                 }
             }
