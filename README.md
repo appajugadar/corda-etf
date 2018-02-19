@@ -21,11 +21,13 @@ http://localhost:10010/api/rest/self-issue-security?quantity=100&securityName=IN
 
 http://localhost:10010/api/rest/sell-security?quantity=10&securityName=OLI
 
+http://localhost:10010/api/rest/SellRequests
+
 http://localhost:10010/api/rest/security-balance
 
 http://localhost:10010/api/rest/cash-balance
 
-http://localhost:10010/api/rest/SellRequests
+
 
 
 
