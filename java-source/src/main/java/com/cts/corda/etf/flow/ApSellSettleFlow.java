@@ -2,6 +2,9 @@ package com.cts.corda.etf.flow;
 
 import co.paralleluniverse.fibers.Suspendable;
 import com.cts.corda.etf.contract.SecurityStock;
+import com.cts.corda.etf.contract.SellContract;
+import com.cts.corda.etf.state.SecurityBuyState;
+import com.cts.corda.etf.state.SecuritySellState;
 import com.google.common.collect.Sets;
 import net.corda.core.contracts.Command;
 import net.corda.core.contracts.PartyAndReference;
@@ -10,16 +13,19 @@ import net.corda.core.contracts.StateAndRef;
 import net.corda.core.flows.*;
 import net.corda.core.identity.AbstractParty;
 import net.corda.core.identity.Party;
+import net.corda.core.node.services.Vault;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.OpaqueBytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.cts.corda.etf.contract.SecurityStock.SECURITY_STOCK_CONTRACT;
+import static com.cts.corda.etf.contract.SellContract.SELL_SECURITY_CONTRACT_ID;
 
 @InitiatingFlow
 @InitiatedBy(APBuyCompletionFlow.class)
@@ -70,6 +76,36 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
 
         System.out.println("Inside EtfIssue flow finalize tx11");
         SignedTransaction fullySignedTx1 = subFlow(new FinalityFlow(fullySignedTx));
+
+
+        //UPDATE sell request as matched
+        //check vault for sell states and if found then return
+        List<StateAndRef<SecuritySellState>> ref = getServiceHub().getVaultService().queryBy(SecuritySellState.class).getStates();
+        SecuritySellState securitySellState = null;
+
+        for (StateAndRef<SecuritySellState> stateref : ref) {
+            securitySellState = stateref.getState().getData();
+            if(securitySellState.getStatus().equals("SELL_MATCHED")){
+
+            }
+        }
+
+        if (securitySellState != null) {
+            //update sell state
+            securitySellState.setBuyer(flowSession.getCounterparty());
+            securitySellState.setStatus("SELL_MATCHED");
+            final Command<SellContract.Commands.Create> txCommand2 = new Command<>(new SellContract.Commands.Create(),
+                    securitySellState.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
+            final TransactionBuilder txBuilder2 = new TransactionBuilder(notary).withItems(new StateAndContract(securitySellState, SELL_SECURITY_CONTRACT_ID), txCommand2);
+            txBuilder2.verify(getServiceHub());
+            final SignedTransaction partSignedTx2 = getServiceHub().signInitialTransaction(txBuilder2);
+
+            FlowSession depositorySession = initiateFlow(securitySellState.getDepository());
+            logger.info("AP Sell flow initiated depo flow ");
+            // Send the state to the counterparty, and receive it back with their signature.
+            final SignedTransaction fullySignedTx2 = subFlow(new CollectSignaturesFlow(partSignedTx2, Sets.newHashSet(depositorySession), CollectSignaturesFlow.Companion.tracker()));
+            subFlow(new FinalityFlow(fullySignedTx2));
+      }
         return fullySignedTx1;
     }
 
