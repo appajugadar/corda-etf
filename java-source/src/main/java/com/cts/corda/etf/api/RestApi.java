@@ -150,6 +150,14 @@ public class RestApi {
                 securityBalanceMap.put(etfTradeState.getSecurityName(), quantity);
             }
 
+
+            for (String key:securityBalanceMap.keySet()) {
+                Long val = securityBalanceMap.get(key);
+                if(val==0){
+                    securityBalanceMap.remove(key);
+                }
+            }
+
             logger.info("etfTradeStates for checkEtfBalance size " + securityBalanceMap.size());
             final ByteArrayOutputStream out = new ByteArrayOutputStream();
             final ObjectMapper mapper = new ObjectMapper();
