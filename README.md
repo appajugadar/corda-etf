@@ -30,7 +30,9 @@ http://localhost:10010/api/rest/SellRequests
 
 
 Regulator
+
 http://localhost:10016/api/rest/SellRequests
+
 http://localhost:10016/api/rest/BuyRequests
 
 
