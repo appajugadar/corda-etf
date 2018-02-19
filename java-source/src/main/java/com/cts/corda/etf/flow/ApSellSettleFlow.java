@@ -44,16 +44,24 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
         for (StateAndRef<SecurityStock.State> stateAndRef : etfTradeStatesQueryResp) {
             securityState = stateAndRef.getState().getData();
         }
-        //CommandAndState commandAndState = securityState.withNewOwner(flowSession.getCounterparty());
+        final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
+
+        //
+        PartyAndReference issuer1 = this.getOurIdentity().ref(OpaqueBytes.of((securityState.getSecurityName() + securityState.getQuantity()).getBytes()));
+        SecurityStock.State etfTradeState1 = new SecurityStock.State(issuer1, getOurIdentity(), securityState.getSecurityName(), -securityState.getQuantity());
+        final Command<SecurityStock.Commands.Issue> txCommand1 = new Command<>(new SecurityStock.Commands.Issue(),
+                securityState.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
+        final TransactionBuilder txBuilder1 = new TransactionBuilder(notary).withItems(new StateAndContract(etfTradeState1, SECURITY_STOCK_CONTRACT), txCommand1);
+        txBuilder1.verify(getServiceHub());
+        final SignedTransaction partSignedTx1 = getServiceHub().signInitialTransaction(txBuilder1);
+        subFlow(new FinalityFlow(partSignedTx1));
+        //
 
         PartyAndReference issuer = this.getOurIdentity().ref(OpaqueBytes.of((securityState.getSecurityName() + securityState.getQuantity()).getBytes()));
         SecurityStock.State etfTradeState = new SecurityStock.State(issuer, flowSession.getCounterparty(), securityState.getSecurityName(), securityState.getQuantity());
         final Command<SecurityStock.Commands.Issue> txCommand = new Command<>(new SecurityStock.Commands.Issue(),
                 securityState.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
-
-        final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
         final TransactionBuilder txBuilder = new TransactionBuilder(notary).withItems(new StateAndContract(etfTradeState, SECURITY_STOCK_CONTRACT), txCommand);
-
         // Verify that the transaction is valid.
         getLogger().info("Before verify ApSellSettleFlow");
         txBuilder.verify(getServiceHub());
