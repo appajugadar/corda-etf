@@ -13,7 +13,6 @@ import net.corda.core.identity.Party;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.OpaqueBytes;
-import net.corda.core.utilities.ProgressTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,22 +73,5 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
         return fullySignedTx1;
     }
 
-    //  @InitiatedBy(ApSellSettleFlow.class)
-    class SignTxFlow extends SignTransactionFlow {
-        private SignTxFlow(FlowSession otherPartyFlow) {
-            super(otherPartyFlow, null);
-            logger.info("ApSellSettleFlow SignTxFlow  ");
-        }
-
-        private SignTxFlow(FlowSession otherPartyFlow, ProgressTracker progressTracker) {
-            super(otherPartyFlow, progressTracker);
-            logger.info("ApSellSettleFlow SignTxFlow  ");
-        }
-
-        @Override
-        protected void checkTransaction(SignedTransaction stx) {
-            logger.info("ApSellSettleFlow SignTxFlow checkTransaction ");
-        }
-    }
 }
 
