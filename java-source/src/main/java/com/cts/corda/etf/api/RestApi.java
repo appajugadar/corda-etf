@@ -1,8 +1,8 @@
 package com.cts.corda.etf.api;
 
 import com.cts.corda.etf.contract.SecurityStock;
-import com.cts.corda.etf.flow.APBuyFlow;
-import com.cts.corda.etf.flow.APSellFlow;
+import com.cts.corda.etf.flow.buy.APBuyFlow;
+import com.cts.corda.etf.flow.sell.APSellFlow;
 import com.cts.corda.etf.flows.SecurityIssueFlow;
 import com.cts.corda.etf.state.SecurityBuyState;
 import com.cts.corda.etf.state.SecuritySellState;

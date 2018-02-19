@@ -1,4 +1,4 @@
-package com.cts.corda.etf.flow;
+package com.cts.corda.etf.flow.buy;
 
 import co.paralleluniverse.fibers.Suspendable;
 import com.cts.corda.etf.contract.BuyContract;
@@ -110,7 +110,7 @@ public class APBuyFlow extends FlowLogic<SignedTransaction> {
     }
 
     @InitiatingFlow
-    class APBuySubFlow extends FlowLogic<String> {
+    public class APBuySubFlow extends FlowLogic<String> {
 
         private final Logger logger = LoggerFactory.getLogger(APBuySubFlow.class);
         private final FlowSession flowSession;
