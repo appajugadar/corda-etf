@@ -60,23 +60,13 @@ public class APSellCompletionFlow extends FlowLogic<SignedTransaction> {
         final Command<SettlementContract.Commands.Create> txCommand = new Command<>(new SettlementContract.Commands.Create(), ls.stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
         final TransactionBuilder txBuilder = new TransactionBuilder(notary).withItems(new StateAndContract(newSellState, Settlement_SECURITY_CONTRACT_ID), txCommand);
 
-
-        //final TransactionBuilder txBuilder = new TransactionBuilder(notary);
-        // Verify that the transaction is valid.
-        //txBuilder.verify(getServiceHub());
-     /*   Amount<Currency> amount = new Amount<Currency>(200, Currency.getInstance("GBP"));
-        net.corda.finance.contracts.asset.Cash.generateSpend(getServiceHub(), txBuilder, amount, newSellState.getBuyer(), new HashSet<>());
-*/
         final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
 
         logger.info("newSellState.getBuyer() " + (newSellState.getBuyer()));
         FlowSession buyerSession = initiateFlow(newSellState.getBuyer());
         logger.info("buyerSession is null " + (buyerSession == null));
 
-
         final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(buyerSession), CollectSignaturesFlow.Companion.tracker()));
-
-
         subFlow(new FinalityFlow(fullySignedTx));
         return fullySignedTx;
     }
