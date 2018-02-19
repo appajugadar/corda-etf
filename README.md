@@ -29,6 +29,20 @@ http://localhost:10010/api/rest/SellRequests
 
 
 
+Depository
+
+http://localhost:10013/api/rest/SellRequests
+
+http://localhost:10013/api/rest/BuyRequests
+
+
+Regulator
+
+http://localhost:10016/api/rest/SellRequests
+
+http://localhost:10016/api/rest/BuyRequests
+
+
 JVM Param for testcase
 
 -ea -javaagent:../lib/quasar.jar
