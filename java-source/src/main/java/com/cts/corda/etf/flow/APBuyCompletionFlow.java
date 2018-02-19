@@ -45,18 +45,21 @@ public class APBuyCompletionFlow extends FlowLogic<String> {
         ls.add(buyState.getBuyer());
         ls.add(buyState.getSeller());
 
-        Amount<Currency> amount = new Amount<Currency>(200, Currency.getInstance("GBP"));
+        Amount<Currency> amount = new Amount<Currency>(buyState.getQuantity()*100, Currency.getInstance("GBP"));
         CashPaymentFlow.PaymentRequest paymentRequest = new CashPaymentFlow.PaymentRequest(amount, buyState.getSeller(), false, new HashSet<>());
         subFlow(new CashPaymentFlow(paymentRequest));
 
         logger.info("securitySellState.getSeller() " + buyState.getSeller());
         FlowSession sellerSession = initiateFlow(buyState.getSeller());
         logger.info("sellerSession.getCounterpartyFlowInfo() " + sellerSession.getCounterpartyFlowInfo());
+
+        //Report to regulator
+        subFlow(new ReportToRegulatorFlow(stx));
+
         return "Success";
     }
 
     class SignTxFlow extends SignTransactionFlow {
-
         private SignTxFlow(FlowSession otherPartyFlow, ProgressTracker progressTracker) {
             super(otherPartyFlow, progressTracker);
         }
@@ -74,5 +77,29 @@ public class APBuyCompletionFlow extends FlowLogic<String> {
             });
         }
     }
+
+
+
+    @InitiatingFlow
+    public class ReportToRegulatorFlow extends FlowLogic<String> {
+        private final SignedTransaction fullySignedTx;
+        public ReportToRegulatorFlow(SignedTransaction fullySignedTx) {
+            this.fullySignedTx = fullySignedTx;
+            System.out.println("Inside ReportToRegulatorFlow for BuyRequest called by ");
+        }
+
+        @Override
+        @Suspendable
+        public String call() throws FlowException {
+            System.out.println("Inside ReportToRegulatorFlow for BuyRequest call method " );
+            Party regulator = (Party)getServiceHub().getIdentityService().partiesFromName("Regulator", true).toArray()[0];
+            FlowSession session = initiateFlow(regulator);
+            subFlow(new SendTransactionFlow(session, fullySignedTx));
+            return "Success";
+        }
+    }
+
+
+
 }
 

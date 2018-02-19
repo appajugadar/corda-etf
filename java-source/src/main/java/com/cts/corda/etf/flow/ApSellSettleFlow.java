@@ -12,6 +12,7 @@ import net.corda.core.contracts.StateAndRef;
 import net.corda.core.flows.*;
 import net.corda.core.identity.AbstractParty;
 import net.corda.core.identity.Party;
+import net.corda.core.node.StatesToRecord;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.OpaqueBytes;
@@ -102,9 +103,33 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
             // Send the state to the counterparty, and receive it back with their signature.
             final SignedTransaction fullySignedTx2 = subFlow(new CollectSignaturesFlow(partSignedTx2, Sets.newHashSet(depositorySession), CollectSignaturesFlow.Companion.tracker()));
             subFlow(new FinalityFlow(fullySignedTx2));
+
+            //Report to regulator
+            subFlow(new ReportToRegulatorFlow(fullySignedTx2));
         }
+
+
         return fullySignedTx1;
     }
 
+
+    @InitiatingFlow
+    public class ReportToRegulatorFlow extends FlowLogic<String> {
+        private final SignedTransaction fullySignedTx;
+        public ReportToRegulatorFlow(SignedTransaction fullySignedTx) {
+            this.fullySignedTx = fullySignedTx;
+            System.out.println("Inside ReportToRegulatorFlow for SellRequest called by ");
+        }
+
+        @Override
+        @Suspendable
+        public String call() throws FlowException {
+            System.out.println("Inside ReportToRegulatorFlow for SellRequest call method " );
+            Party regulator = (Party)getServiceHub().getIdentityService().partiesFromName("Regulator", true).toArray()[0];
+            FlowSession session = initiateFlow(regulator);
+            subFlow(new SendTransactionFlow(session, fullySignedTx));
+            return "Success";
+        }
+    }
 }
 

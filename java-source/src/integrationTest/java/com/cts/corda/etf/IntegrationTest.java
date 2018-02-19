@@ -48,6 +48,8 @@ public class IntegrationTest {
 
         Party depository = new Party(new CordaX500Name("DEPOSITORY", "London", "GB"), entropyToKeyPair(BigInteger.valueOf(70)).getPublic());
 
+        Party regulator = new Party(new CordaX500Name("Regulator", "London", "GB"), entropyToKeyPair(BigInteger.valueOf(90)).getPublic());
+
 
         Set<ServiceInfo> notaryServices = ImmutableSet.of(new ServiceInfo(SimpleNotaryService.Companion.getType(), null));
 
@@ -60,7 +62,9 @@ public class IntegrationTest {
                     dsl.startNode(new NodeParameters().setProvidedName(notary.getName()).setAdvertisedServices(notaryServices)),
                     dsl.startNode(new NodeParameters().setProvidedName(ap1.getName())),
                     dsl.startNode(new NodeParameters().setProvidedName(ap2.getName())),
-                    dsl.startNode(new NodeParameters().setProvidedName(depository.getName()))
+                    dsl.startNode(new NodeParameters().setProvidedName(depository.getName())),
+                    dsl.startNode(new NodeParameters().setProvidedName(regulator.getName())
+                    )
             );
 
             try {
@@ -68,6 +72,7 @@ public class IntegrationTest {
                 NodeHandle ap1Handle = handles.get(1).get();
                 NodeHandle ap2Handle = handles.get(2).get();
                 NodeHandle depositoryHandle = handles.get(3).get();
+                NodeHandle regulatorHandle = handles.get(4).get();
 
                 // This test will call via the RPC proxy to find a party of another node to verify that the nodes have
                 // started and can communicate. This is a very basic test, in practice tests would be starting flows,
@@ -77,18 +82,20 @@ public class IntegrationTest {
                 CordaFuture<WebserverHandle> ap1Handle1 = dsl.startWebserver(ap1Handle);
                 CordaFuture<WebserverHandle> ap2Handle1 = dsl.startWebserver(ap2Handle);
                 CordaFuture<WebserverHandle> depositoryHandle1 = dsl.startWebserver(depositoryHandle);
+                CordaFuture<WebserverHandle> regulatorHandle1 = dsl.startWebserver(regulatorHandle);
 
                 log.info("ap1Handle address: " + ap1Handle1.get().getListenAddress());
                 log.info("ap2Handle address: " + ap2Handle1.get().getListenAddress());
                 log.info("depositoryHandle address: " + depositoryHandle1.get().getListenAddress());
+                log.info("regulatorHandle address: " + regulatorHandle1.get().getListenAddress());
 
 
                 dsl.waitForAllNodesToFinish();
 
-
                 Assert.assertEquals(notaryHandle.getRpc().wellKnownPartyFromX500Name(ap1.getName()).getName(), ap1.getName());
                 Assert.assertEquals(notaryHandle.getRpc().wellKnownPartyFromX500Name(ap2.getName()).getName(), ap2.getName());
                 Assert.assertEquals(notaryHandle.getRpc().wellKnownPartyFromX500Name(depository.getName()).getName(), depository.getName());
+                Assert.assertEquals(notaryHandle.getRpc().wellKnownPartyFromX500Name(regulator.getName()).getName(), regulator.getName());
                 Assert.assertEquals(notaryHandle.getRpc().wellKnownPartyFromX500Name(notary.getName()).getName(), notary.getName());
             } catch (Exception e) {
                 throw new RuntimeException("Caught exception during test", e);
