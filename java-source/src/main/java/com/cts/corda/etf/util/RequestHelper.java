@@ -5,13 +5,14 @@ import com.cts.corda.etf.state.SecuritySellState;
 import net.corda.core.contracts.StateAndRef;
 import net.corda.core.contracts.UniqueIdentifier;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class RequestHelper {
 
-    public static SecuritySellState getUnmatchedSecuritySellState(List<StateAndRef<SecuritySellState>> ref) {
+    public static List<SecuritySellState> getUnmatchedSecuritySellState(List<StateAndRef<SecuritySellState>> ref) {
 
         Map<UniqueIdentifier, SecuritySellState> requestsMap = new HashMap();
         for (StateAndRef<SecuritySellState> stateref : ref) {
@@ -27,15 +28,14 @@ public class RequestHelper {
                 requestsMap.remove(securitySellState.getLinearId());
             }
         }
-
+        List<SecuritySellState> ls = new ArrayList<>();
         if (!requestsMap.values().isEmpty())
-            return (SecuritySellState) requestsMap.values().toArray()[0];
-
-        return null;
+            ls.addAll(requestsMap.values());
+        return ls;
     }
 
 
-    public static SecurityBuyState getUnmatchedSecurityBuyState(List<StateAndRef<SecurityBuyState>> ref) {
+    public static List<SecurityBuyState> getUnmatchedSecurityBuyState(List<StateAndRef<SecurityBuyState>> ref) {
 
         Map<UniqueIdentifier, SecurityBuyState> requestsMap = new HashMap();
         for (StateAndRef<SecurityBuyState> stateref : ref) {
@@ -52,10 +52,11 @@ public class RequestHelper {
             }
         }
 
+        List<SecurityBuyState> ls = new ArrayList<>();
         if (!requestsMap.values().isEmpty())
-            return (SecurityBuyState) requestsMap.values().toArray()[0];
+            ls.addAll(requestsMap.values());
 
-        return null;
+        return ls;
     }
 
 }

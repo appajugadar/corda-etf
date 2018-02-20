@@ -6,6 +6,7 @@ import com.cts.corda.etf.flow.sell.APSellFlow;
 import com.cts.corda.etf.flows.SecurityIssueFlow;
 import com.cts.corda.etf.state.SecurityBuyState;
 import com.cts.corda.etf.state.SecuritySellState;
+import com.cts.corda.etf.util.RequestHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.collect.ImmutableList;
@@ -96,7 +97,24 @@ public class RestApi {
     @Path("SellRequests")
     @Produces(MediaType.APPLICATION_JSON)
     public List<StateAndRef<SecuritySellState>> getSellRequests() {
-        return rpcOps.vaultQuery(SecuritySellState.class).getStates();
+        List<StateAndRef<SecuritySellState>> ref =  rpcOps.vaultQuery(SecuritySellState.class).getStates();
+        return ref;
+    }
+
+    @GET
+    @Path("UnMatchedSellRequests")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<SecuritySellState> getUnMatchedSellRequests() {
+        List<StateAndRef<SecuritySellState>> ref =  rpcOps.vaultQuery(SecuritySellState.class).getStates();
+        return RequestHelper.getUnmatchedSecuritySellState(ref);
+    }
+
+    @GET
+    @Path("UnMatchedBuyRequests")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<SecurityBuyState> getUnMatchedBuyRequests() {
+        List<StateAndRef<SecurityBuyState>> ref =  rpcOps.vaultQuery(SecurityBuyState.class).getStates();
+        return RequestHelper.getUnmatchedSecurityBuyState(ref);
     }
 
     @GET

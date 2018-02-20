@@ -52,6 +52,9 @@ public class APBuyCompletionFlow extends FlowLogic<String> {
 
         logger.info("securitySellState.getSeller() " + buyState.getSeller());
         FlowSession sellerSession = initiateFlow(buyState.getSeller());
+
+      //TODO send linear id to seller  sellerSession.send(buyState.getSellerStateLinearId());
+
         logger.info("sellerSession.getCounterpartyFlowInfo() " + sellerSession.getCounterpartyFlowInfo());
 
         //Report to regulator
