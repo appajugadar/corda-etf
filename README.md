@@ -45,6 +45,17 @@ http://localhost:10016/api/rest/SellRequests
 http://localhost:10016/api/rest/BuyRequests
 
 
+--CP Flow
+
+http://localhost:10007/api/rest/self-issue-cp?quantity=100&currency=GBP
+
+http://localhost:10007/api/rest/cp-balance
+
+http://localhost:10007/api/rest/move-cp?receiverPartyName=AP2
+
+
+http://localhost:10010/api/rest/cp-balance
+
 JVM Param for testcase
 
 -ea -javaagent:../lib/quasar.jar
