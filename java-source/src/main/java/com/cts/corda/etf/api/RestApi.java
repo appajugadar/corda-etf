@@ -1,9 +1,12 @@
 package com.cts.corda.etf.api;
 
 import com.cts.corda.etf.contract.SecurityStock;
+import com.cts.corda.etf.flow.CommercialPaperIssueFlow;
+import com.cts.corda.etf.flow.CommercialPaperMoveFlow;
 import com.cts.corda.etf.flow.buy.APBuyFlow;
 import com.cts.corda.etf.flow.sell.APSellFlow;
 import com.cts.corda.etf.flows.SecurityIssueFlow;
+import com.cts.corda.etf.state.CommercialPaper;
 import com.cts.corda.etf.state.SecurityBuyState;
 import com.cts.corda.etf.state.SecuritySellState;
 import com.cts.corda.etf.util.RequestHelper;
@@ -12,6 +15,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.corda.core.contracts.Amount;
+import net.corda.core.contracts.Issued;
 import net.corda.core.contracts.StateAndRef;
 import net.corda.core.identity.CordaX500Name;
 import net.corda.core.identity.Party;
@@ -32,10 +36,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.ByteArrayOutputStream;
-import java.util.Currency;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.Instant;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 import static java.util.stream.Collectors.toList;
@@ -260,4 +262,59 @@ public class RestApi {
                 .filter(name -> !name.equals(myLegalName) && !serviceNames.contains(name.getOrganisation()))
                 .collect(toList()));
     }
+
+
+    @GET
+    @Path("self-issue-cp")
+    public Response selfIssueCP(@QueryParam(value = "quantity") int quantity, @QueryParam(value = "currency") String currency) throws ExecutionException, InterruptedException {
+        logger.info("Inputs for self issue currency  " + currency + "   quantity " + quantity);
+        final List<Party> notaries = rpcOps.notaryIdentities();
+        if (notaries.isEmpty()) {
+            throw new IllegalStateException("Could not find a notary.");
+        }
+
+        Amount<Currency> faceValue = new Amount<Currency>(new Long(quantity), Currency.getInstance(currency));
+        FlowHandle<SignedTransaction> flowHandle = rpcOps.startFlowDynamic(CommercialPaperIssueFlow.class, faceValue, Instant.now());
+
+        SignedTransaction result = flowHandle.getReturnValue().get();
+        logger.info("Received resp from flow " + result);
+
+        return Response.status(CREATED).entity("SUCCESS").build();
+    }
+
+
+    @GET
+    @Path("move-cp")
+    public Response moveCP(@QueryParam(value = "receiverPartyName") String receiverPartyName) throws ExecutionException, InterruptedException {
+        Party receiverParty = getPartyWithName(new CordaX500Name(receiverPartyName, "London", "GB"));
+        FlowHandle<SignedTransaction> flowHandle = rpcOps.startFlowDynamic(CommercialPaperMoveFlow.class, receiverParty);
+        SignedTransaction result = flowHandle.getReturnValue().get();
+        logger.info("Received resp from flow " + result);
+        return Response.status(CREATED).entity("SUCCESS").build();
+    }
+
+    @GET
+    @Path("cp-balance")
+    public Response checkCPBalance() {
+        try {
+            List<StateAndRef<CommercialPaper.State>> etfTradeStatesQueryResp = rpcOps.vaultQuery(CommercialPaper.State.class).getStates();
+            List cpList = new ArrayList<>();
+            for (StateAndRef<CommercialPaper.State> stateAndRef : etfTradeStatesQueryResp) {
+                CommercialPaper.State etfTradeState = stateAndRef.getState().getData();
+                cpList.add(etfTradeState);
+            }
+            logger.info("cp size " + cpList.size());
+            final ByteArrayOutputStream out = new ByteArrayOutputStream();
+            final ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+            mapper.writeValue(out, cpList);
+            String json = new String(out.toByteArray());
+            logger.info("cp size json " + json);
+            return Response.status(CREATED).entity(json).build();
+        } catch (Exception e) {
+            return Response.status(BAD_REQUEST).entity(e.getMessage()).build();
+        }
+    }
+
+
 }
