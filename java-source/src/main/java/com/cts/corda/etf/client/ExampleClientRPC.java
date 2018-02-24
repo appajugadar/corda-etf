@@ -10,8 +10,6 @@ import net.corda.core.messaging.DataFeed;
 import net.corda.core.node.services.Vault;
 import net.corda.core.utilities.NetworkHostAndPort;
 import org.apache.activemq.artemis.api.core.ActiveMQException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import rx.Observable;
 
 import java.util.concurrent.ExecutionException;
@@ -22,7 +20,6 @@ import java.util.concurrent.ExecutionException;
  */
 @Slf4j
 public class ExampleClientRPC {
-    private static final Logger logger = LoggerFactory.getLogger(ExampleClientRPC.class);
 
     private static void logState(StateAndRef<SecurityBuyState> state) {
         log.info("{}", state.getState().getData());

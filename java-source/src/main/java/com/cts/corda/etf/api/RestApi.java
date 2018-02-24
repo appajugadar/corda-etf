@@ -26,8 +26,6 @@ import net.corda.core.node.NodeInfo;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.utilities.OpaqueBytes;
 import net.corda.finance.flows.AbstractCashFlow;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -48,7 +46,6 @@ import static javax.ws.rs.core.Response.Status.CREATED;
 @Slf4j
 public class RestApi {
 
-    static private final Logger logger = LoggerFactory.getLogger(RestApi.class);
     private final CordaRPCOps rpcOps;
     private final CordaX500Name myLegalName;
     private final List<String> serviceNames = ImmutableList.of("Controller", "Network Map Service");
@@ -90,7 +87,7 @@ public class RestApi {
 
         } catch (Throwable ex) {
             final String msg = ex.getMessage();
-            logger.error(ex.getMessage(), ex);
+            log.error(ex.getMessage(), ex);
             return Response.status(BAD_REQUEST).entity(msg).build();
         }
     }
@@ -144,7 +141,7 @@ public class RestApi {
 
         } catch (Throwable ex) {
             final String msg = ex.getMessage();
-            logger.error(ex.getMessage(), ex);
+            log.error(ex.getMessage(), ex);
             return Response.status(BAD_REQUEST).entity(msg).build();
         }
     }
