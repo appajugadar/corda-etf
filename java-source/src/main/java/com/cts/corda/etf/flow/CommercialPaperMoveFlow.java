@@ -3,6 +3,7 @@ package com.cts.corda.etf.flow;
 import co.paralleluniverse.fibers.Suspendable;
 import com.cts.corda.etf.state.CommercialPaper;
 import com.google.common.collect.Sets;
+import lombok.extern.slf4j.Slf4j;
 import net.corda.core.contracts.Command;
 import net.corda.core.contracts.StateAndContract;
 import net.corda.core.contracts.StateAndRef;
@@ -17,11 +18,13 @@ import net.corda.core.utilities.ProgressTracker;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
 import static com.cts.corda.etf.state.CommercialPaper.JCP_PROGRAM_ID;
 
 
 @InitiatingFlow
 @StartableByRPC
+@Slf4j
 public class CommercialPaperMoveFlow extends FlowLogic<SignedTransaction> {
 
     private final Party receiverParty;
@@ -43,7 +46,7 @@ public class CommercialPaperMoveFlow extends FlowLogic<SignedTransaction> {
         }
     };
 
-    private final ProgressTracker progressTracker = new ProgressTracker(GENERATING_TRANSACTION,VERIFYING_TRANSACTION,SIGNING_TRANSACTION,GATHERING_SIGS,FINALISING_TRANSACTION);
+    private final ProgressTracker progressTracker = new ProgressTracker(GENERATING_TRANSACTION, VERIFYING_TRANSACTION, SIGNING_TRANSACTION, GATHERING_SIGS, FINALISING_TRANSACTION);
 
     public CommercialPaperMoveFlow(Party receiverParty) {
         this.receiverParty = receiverParty;
@@ -71,11 +74,11 @@ public class CommercialPaperMoveFlow extends FlowLogic<SignedTransaction> {
         CommercialPaper.State cpState = null;
         StateAndRef<CommercialPaper.State> stateref1 = null;
         for (StateAndRef<CommercialPaper.State> stateref : results.getStates()) {
-            stateref1 =stateref;
+            stateref1 = stateref;
             cpState = stateref.getState().getData();
         }
 
-        System.out.println("Commercialpapermove flow 1");
+        log.info("Commercialpapermove flow 1");
         List<AbstractParty> ps = new ArrayList();
         ps.add(cpState.getOwner());
         ps.add(receiverParty);
@@ -85,33 +88,33 @@ public class CommercialPaperMoveFlow extends FlowLogic<SignedTransaction> {
         final Command<CommercialPaper.Commands.Move> txCommand = new Command<>(new CommercialPaper.Commands.Move(),
                 ps.stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
 
-        System.out.println("Commercialpapermove flow 2");
+        log.info("Commercialpapermove flow 2");
         final TransactionBuilder txBuilder = new TransactionBuilder(notary).withItems(new StateAndContract(cpState, JCP_PROGRAM_ID), stateref1, txCommand);
-        System.out.println("Commercialpapermove flow 3");
+        log.info("Commercialpapermove flow 3");
         // Stage 2.
         progressTracker.setCurrentStep(VERIFYING_TRANSACTION);
 
         // Verify that the transaction is valid.
         txBuilder.verify(getServiceHub());
-        System.out.println("Commercialpapermove flow 4");
+        log.info("Commercialpapermove flow 4");
         // Stage 3.        // Sign the transaction.
         progressTracker.setCurrentStep(SIGNING_TRANSACTION);
 
         final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
-        System.out.println("Commercialpapermove flow 5");
+        log.info("Commercialpapermove flow 5");
         // Stage 4.
         progressTracker.setCurrentStep(GATHERING_SIGS);
-        System.out.println("Commercialpapermove flow receiverParty() " + receiverParty);
+        log.info("Commercialpapermove flow receiverParty() " + receiverParty);
         FlowSession receiverSession = initiateFlow(receiverParty);
 
-        System.out.println("Commercialpapermove flow initiated receiver flow receiverSession==null > "+(receiverSession == null));
+        log.info("Commercialpapermove flow initiated receiver flow receiverSession==null > " + (receiverSession == null));
 
-        System.out.println("Commercialpapermove flow initiated receiver FLowInfo "+receiverSession.getCounterparty());
+        log.info("Commercialpapermove flow initiated receiver FLowInfo " + receiverSession.getCounterparty());
         // Send the state to the counterparty, and receive it back with their signature.
         final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx,
                 Sets.newHashSet(receiverSession), CollectSignaturesFlow.Companion.tracker()));
         // Stage 5.
-        System.out.println("Commercialpapermove flow got receiver sign");
+        log.info("Commercialpapermove flow got receiver sign");
         progressTracker.setCurrentStep(FINALISING_TRANSACTION);
         return subFlow(new FinalityFlow(fullySignedTx));
     }

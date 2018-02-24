@@ -3,6 +3,7 @@ package com.cts.corda.etf.flow.buy;
 import co.paralleluniverse.fibers.Suspendable;
 import com.cts.corda.etf.flow.depository.DepositorySellFlow;
 import com.cts.corda.etf.state.SecurityBuyState;
+import lombok.extern.slf4j.Slf4j;
 import net.corda.core.contracts.Amount;
 import net.corda.core.contracts.ContractState;
 import net.corda.core.flows.*;
@@ -22,6 +23,7 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 @InitiatingFlow
 @InitiatedBy(DepositorySellFlow.class)
+@Slf4j
 public class APBuyCompletionFlow extends FlowLogic<String> {
 
     static private final Logger logger = LoggerFactory.getLogger(APBuyCompletionFlow.class);
@@ -29,7 +31,7 @@ public class APBuyCompletionFlow extends FlowLogic<String> {
 
     public APBuyCompletionFlow(FlowSession flowSession) {
         this.flowSession = flowSession;
-        System.out.println("Inside APBuyCompletionFlow called by " + flowSession.getCounterparty());
+        log.info("Inside APBuyCompletionFlow called by " + flowSession.getCounterparty());
     }
 
     @Suspendable
@@ -53,7 +55,7 @@ public class APBuyCompletionFlow extends FlowLogic<String> {
         logger.info("securitySellState.getSeller() " + buyState.getSeller());
         FlowSession sellerSession = initiateFlow(buyState.getSeller());
 
-      //TODO send linear id to seller  sellerSession.send(buyState.getSellerStateLinearId());
+        //TODO send linear id to seller  sellerSession.send(buyState.getSellerStateLinearId());
 
         logger.info("sellerSession.getCounterpartyFlowInfo() " + sellerSession.getCounterpartyFlowInfo());
 
@@ -89,13 +91,13 @@ public class APBuyCompletionFlow extends FlowLogic<String> {
 
         public ReportToRegulatorFlow(SignedTransaction fullySignedTx) {
             this.fullySignedTx = fullySignedTx;
-            System.out.println("Inside ReportToRegulatorFlow for BuyRequest called by ");
+            log.info("Inside ReportToRegulatorFlow for BuyRequest called by ");
         }
 
         @Override
         @Suspendable
         public String call() throws FlowException {
-            System.out.println("Inside ReportToRegulatorFlow for BuyRequest call method ");
+            log.info("Inside ReportToRegulatorFlow for BuyRequest call method ");
             Party regulator = (Party) getServiceHub().getIdentityService().partiesFromName("Regulator", true).toArray()[0];
             FlowSession session = initiateFlow(regulator);
             subFlow(new SendTransactionFlow(session, fullySignedTx));

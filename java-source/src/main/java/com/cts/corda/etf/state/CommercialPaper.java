@@ -15,6 +15,7 @@ import net.corda.finance.contracts.asset.Cash;
 import net.corda.finance.utils.StateSumming;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Currency;
@@ -31,6 +32,146 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
  */
 public class CommercialPaper implements Contract {
     public static final String JCP_PROGRAM_ID = "com.cts.corda.etf.state.CommercialPaper";
+
+    private static <T> T onlyElementOf(Iterable<T> iterable) {
+        Iterator<T> iter = iterable.iterator();
+        T item = iter.next();
+        if (iter.hasNext()) {
+            throw new IllegalArgumentException("Iterable has more than one element!");
+        }
+        return item;
+    }
+
+    @NotNull
+    private List<CommandWithParties<Commands>> extractCommands(@NotNull LedgerTransaction tx) {
+        return tx.getCommands()
+                .stream()
+                .filter((CommandWithParties<CommandData> command) -> command.getValue() instanceof Commands)
+                .map((CommandWithParties<CommandData> command) -> new CommandWithParties<>(command.getSigners(), command.getSigningParties(), (Commands) command.getValue()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void verify(@NotNull LedgerTransaction tx) throws IllegalArgumentException {
+
+        // Group by everything except owner: any modification to the CP at all is considered changing it fundamentally.
+        final List<LedgerTransaction.InOutGroup<State, State>> groups = tx.groupStates(State.class, State::withoutOwner);
+
+        // There are two possible things that can be done with this CP. The first is trading it. The second is redeeming
+        // it for cash on or after the maturity date.
+        final List<CommandWithParties<CommandData>> commands = tx.getCommands().stream().filter(
+                it -> it.getValue() instanceof Commands
+        ).collect(Collectors.toList());
+        final CommandWithParties<CommandData> command = onlyElementOf(commands);
+        final TimeWindow timeWindow = tx.getTimeWindow();
+
+        for (final LedgerTransaction.InOutGroup<State, State> group : groups) {
+            final List<State> inputs = group.getInputs();
+            final List<State> outputs = group.getOutputs();
+            if (command.getValue() instanceof Commands.Move) {
+                final CommandWithParties<Commands.Move> cmd = requireSingleCommand(tx.getCommands(), Commands.Move.class);
+                // There should be only a single input due to aggregation above
+                final State input = onlyElementOf(inputs);
+
+                if (!cmd.getSigners().contains(input.getOwner().getOwningKey()))
+                    throw new IllegalStateException("Failed requirement: the transaction is signed by the owner of the CP");
+
+                // Check the output CP state is the same as the input state, ignoring the owner field.
+                if (outputs.size() != 1) {
+                    throw new IllegalStateException("the state is propagated");
+                }
+            } else if (command.getValue() instanceof Commands.Redeem) {
+                final CommandWithParties<Commands.Redeem> cmd = requireSingleCommand(tx.getCommands(), Commands.Redeem.class);
+
+                // There should be only a single input due to aggregation above
+                final State input = onlyElementOf(inputs);
+
+                if (!cmd.getSigners().contains(input.getOwner().getOwningKey()))
+                    throw new IllegalStateException("Failed requirement: the transaction is signed by the owner of the CP");
+
+                final Instant time = null == timeWindow
+                        ? null
+                        : timeWindow.getUntilTime();
+                final Amount<Issued<Currency>> received = StateSumming.sumCashBy(tx.getOutputStates(), input.getOwner());
+
+                requireThat(require -> {
+                    require.using("must be timestamped", timeWindow != null);
+                    require.using("received amount equals the face value: "
+                            + received + " vs " + input.getFaceValue(), received.equals(input.getFaceValue()));
+                    require.using("the paper must have matured", time != null && !time.isBefore(input.getMaturityDate()));
+                    require.using("the received amount equals the face value", input.getFaceValue().equals(received));
+                    require.using("the paper must be destroyed", outputs.isEmpty());
+                    return Unit.INSTANCE;
+                });
+            } else if (command.getValue() instanceof Commands.Issue) {
+                final CommandWithParties<Commands.Issue> cmd = requireSingleCommand(tx.getCommands(), Commands.Issue.class);
+                final State output = onlyElementOf(outputs);
+                final Instant time = null == timeWindow
+                        ? null
+                        : timeWindow.getUntilTime();
+
+                requireThat(require -> {
+                    require.using("output values sum to more than the inputs", inputs.isEmpty());
+                    require.using("output values sum to more than the inputs", output.faceValue.getQuantity() > 0);
+                    //       require.using("must be timestamped", timeWindow != null);
+                    //     require.using("the maturity date is not in the past", time != null && time.isBefore(output.getMaturityDate()));
+                    require.using("output states are issued by a command signer", cmd.getSigners().contains(output.issuance.getParty().getOwningKey()));
+                    return Unit.INSTANCE;
+                });
+            }
+        }
+    }
+
+    public TransactionBuilder generateIssue(@NotNull PartyAndReference issuance, @NotNull Amount<Issued<Currency>> faceValue, @Nullable Instant maturityDate, @NotNull Party notary, Integer encumbrance) {
+        State state = new State(issuance, issuance.getParty(), faceValue, maturityDate);
+        TransactionState output = new TransactionState<>(state, JCP_PROGRAM_ID, notary, encumbrance);
+        return new TransactionBuilder(notary).withItems(output, new Command<>(new Commands.Issue(), issuance.getParty().getOwningKey()));
+    }
+
+    public TransactionBuilder generateIssue(@NotNull PartyAndReference issuance, @NotNull Amount<Issued<Currency>> faceValue, @Nullable Instant maturityDate, @NotNull Party notary) {
+        return generateIssue(issuance, faceValue, maturityDate, notary, null);
+    }
+
+    @Suspendable
+    public void generateRedeem(final TransactionBuilder tx,
+                               final StateAndRef<State> paper,
+                               final ServiceHub services,
+                               final PartyAndCertificate ourIdentity) throws InsufficientBalanceException {
+        Amount<Currency> amount = Structures.withoutIssuer(paper.getState().getData().getFaceValue());
+        Cash.generateSpend(services, tx,
+                amount, paper.getState().getData().getOwner(), Collections.emptySet());
+        tx.addInputState(paper);
+        tx.addCommand(new Command<>(new Commands.Redeem(), paper.getState().getData().getOwner().getOwningKey()));
+    }
+
+    public void generateMove(TransactionBuilder tx, StateAndRef<State> paper, AbstractParty newOwner) {
+        tx.addInputState(paper);
+        tx.addOutputState(new TransactionState<>(new State(paper.getState().getData().getIssuance(), newOwner, paper.getState().getData().getFaceValue(), paper.getState().getData().getMaturityDate()), JCP_PROGRAM_ID, paper.getState().getNotary(), paper.getState().getEncumbrance()));
+        tx.addCommand(new Command<>(new Commands.Move(), paper.getState().getData().getOwner().getOwningKey()));
+    }
+
+    public interface Commands extends CommandData {
+        class Move implements Commands {
+            @Override
+            public boolean equals(Object obj) {
+                return obj instanceof Move;
+            }
+        }
+
+        class Redeem implements Commands {
+            @Override
+            public boolean equals(Object obj) {
+                return obj instanceof Redeem;
+            }
+        }
+
+        class Issue implements Commands {
+            @Override
+            public boolean equals(Object obj) {
+                return obj instanceof Issue;
+            }
+        }
+    }
 
     public static class State implements OwnableState, ICommercialPaperState {
         private PartyAndReference issuance;
@@ -119,145 +260,5 @@ public class CommercialPaper implements Contract {
         public List<AbstractParty> getParticipants() {
             return Collections.singletonList(this.owner);
         }
-    }
-
-    public interface Commands extends CommandData {
-        class Move implements Commands {
-            @Override
-            public boolean equals(Object obj) {
-                return obj instanceof Move;
-            }
-        }
-
-        class Redeem implements Commands {
-            @Override
-            public boolean equals(Object obj) {
-                return obj instanceof Redeem;
-            }
-        }
-
-        class Issue implements Commands {
-            @Override
-            public boolean equals(Object obj) {
-                return obj instanceof Issue;
-            }
-        }
-    }
-
-    @NotNull
-    private List<CommandWithParties<Commands>> extractCommands(@NotNull LedgerTransaction tx) {
-        return tx.getCommands()
-                .stream()
-                .filter((CommandWithParties<CommandData> command) -> command.getValue() instanceof Commands)
-                .map((CommandWithParties<CommandData> command) -> new CommandWithParties<>(command.getSigners(), command.getSigningParties(), (Commands) command.getValue()))
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public void verify(@NotNull LedgerTransaction tx) throws IllegalArgumentException {
-
-        // Group by everything except owner: any modification to the CP at all is considered changing it fundamentally.
-        final List<LedgerTransaction.InOutGroup<State, State>> groups = tx.groupStates(State.class, State::withoutOwner);
-
-        // There are two possible things that can be done with this CP. The first is trading it. The second is redeeming
-        // it for cash on or after the maturity date.
-        final List<CommandWithParties<CommandData>> commands = tx.getCommands().stream().filter(
-                it -> it.getValue() instanceof Commands
-        ).collect(Collectors.toList());
-        final CommandWithParties<CommandData> command = onlyElementOf(commands);
-        final TimeWindow timeWindow = tx.getTimeWindow();
-
-        for (final LedgerTransaction.InOutGroup<State, State> group : groups) {
-            final List<State> inputs = group.getInputs();
-            final List<State> outputs = group.getOutputs();
-            if (command.getValue() instanceof Commands.Move) {
-                final CommandWithParties<Commands.Move> cmd = requireSingleCommand(tx.getCommands(), Commands.Move.class);
-                // There should be only a single input due to aggregation above
-                final State input = onlyElementOf(inputs);
-
-                if (!cmd.getSigners().contains(input.getOwner().getOwningKey()))
-                    throw new IllegalStateException("Failed requirement: the transaction is signed by the owner of the CP");
-
-                // Check the output CP state is the same as the input state, ignoring the owner field.
-                if (outputs.size() != 1) {
-                    throw new IllegalStateException("the state is propagated");
-                }
-            } else if (command.getValue() instanceof Commands.Redeem) {
-                final CommandWithParties<Commands.Redeem> cmd = requireSingleCommand(tx.getCommands(), Commands.Redeem.class);
-
-                // There should be only a single input due to aggregation above
-                final State input = onlyElementOf(inputs);
-
-                if (!cmd.getSigners().contains(input.getOwner().getOwningKey()))
-                    throw new IllegalStateException("Failed requirement: the transaction is signed by the owner of the CP");
-
-                final Instant time = null == timeWindow
-                        ? null
-                        : timeWindow.getUntilTime();
-                final Amount<Issued<Currency>> received = StateSumming.sumCashBy(tx.getOutputStates(), input.getOwner());
-
-                requireThat(require -> {
-                    require.using("must be timestamped", timeWindow != null);
-                    require.using("received amount equals the face value: "
-                            + received + " vs " + input.getFaceValue(), received.equals(input.getFaceValue()));
-                    require.using("the paper must have matured", time != null && !time.isBefore(input.getMaturityDate()));
-                    require.using("the received amount equals the face value", input.getFaceValue().equals(received));
-                    require.using("the paper must be destroyed", outputs.isEmpty());
-                    return Unit.INSTANCE;
-                });
-            } else if (command.getValue() instanceof Commands.Issue) {
-                final CommandWithParties<Commands.Issue> cmd = requireSingleCommand(tx.getCommands(), Commands.Issue.class);
-                final State output = onlyElementOf(outputs);
-                final Instant time = null == timeWindow
-                        ? null
-                        : timeWindow.getUntilTime();
-
-                requireThat(require -> {
-                    require.using("output values sum to more than the inputs", inputs.isEmpty());
-                    require.using("output values sum to more than the inputs", output.faceValue.getQuantity() > 0);
-             //       require.using("must be timestamped", timeWindow != null);
-               //     require.using("the maturity date is not in the past", time != null && time.isBefore(output.getMaturityDate()));
-                    require.using("output states are issued by a command signer", cmd.getSigners().contains(output.issuance.getParty().getOwningKey()));
-                    return Unit.INSTANCE;
-                });
-            }
-        }
-    }
-
-    public TransactionBuilder generateIssue(@NotNull PartyAndReference issuance, @NotNull Amount<Issued<Currency>> faceValue, @Nullable Instant maturityDate, @NotNull Party notary, Integer encumbrance) {
-        State state = new State(issuance, issuance.getParty(), faceValue, maturityDate);
-        TransactionState output = new TransactionState<>(state, JCP_PROGRAM_ID, notary, encumbrance);
-        return new TransactionBuilder(notary).withItems(output, new Command<>(new Commands.Issue(), issuance.getParty().getOwningKey()));
-    }
-
-    public TransactionBuilder generateIssue(@NotNull PartyAndReference issuance, @NotNull Amount<Issued<Currency>> faceValue, @Nullable Instant maturityDate, @NotNull Party notary) {
-        return generateIssue(issuance, faceValue, maturityDate, notary, null);
-    }
-
-    @Suspendable
-    public void generateRedeem(final TransactionBuilder tx,
-                               final StateAndRef<State> paper,
-                               final ServiceHub services,
-                               final PartyAndCertificate ourIdentity) throws InsufficientBalanceException {
-        Amount<Currency> amount = Structures.withoutIssuer(paper.getState().getData().getFaceValue());
-        Cash.generateSpend(services, tx,
-                amount, paper.getState().getData().getOwner(), Collections.emptySet());
-        tx.addInputState(paper);
-        tx.addCommand(new Command<>(new Commands.Redeem(), paper.getState().getData().getOwner().getOwningKey()));
-    }
-
-    public void generateMove(TransactionBuilder tx, StateAndRef<State> paper, AbstractParty newOwner) {
-        tx.addInputState(paper);
-        tx.addOutputState(new TransactionState<>(new State(paper.getState().getData().getIssuance(), newOwner, paper.getState().getData().getFaceValue(), paper.getState().getData().getMaturityDate()), JCP_PROGRAM_ID, paper.getState().getNotary(), paper.getState().getEncumbrance()));
-        tx.addCommand(new Command<>(new Commands.Move(), paper.getState().getData().getOwner().getOwningKey()));
-    }
-
-    private static <T> T onlyElementOf(Iterable<T> iterable) {
-        Iterator<T> iter = iterable.iterator();
-        T item = iter.next();
-        if (iter.hasNext()) {
-            throw new IllegalArgumentException("Iterable has more than one element!");
-        }
-        return item;
     }
 }

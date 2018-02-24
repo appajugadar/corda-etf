@@ -1,6 +1,7 @@
 package com.cts.corda.etf.contract;
 
 import com.cts.corda.etf.state.SecurityBuyState;
+import lombok.extern.slf4j.Slf4j;
 import net.corda.core.contracts.CommandData;
 import net.corda.core.contracts.CommandWithParties;
 import net.corda.core.contracts.Contract;
@@ -24,6 +25,7 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
  * <p>
  * All contracts must sub-class the [Contract] interface.
  */
+@Slf4j
 public class BuyContract implements Contract {
 
     //

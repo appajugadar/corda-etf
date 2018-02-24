@@ -5,6 +5,7 @@ import com.cts.corda.etf.contract.SettlementContract;
 import com.cts.corda.etf.flow.depository.DepositoryBuyFlow;
 import com.cts.corda.etf.state.SecuritySellState;
 import com.google.common.collect.Sets;
+import lombok.extern.slf4j.Slf4j;
 import net.corda.core.contracts.Command;
 import net.corda.core.contracts.ContractState;
 import net.corda.core.contracts.StateAndContract;
@@ -27,6 +28,7 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 @InitiatingFlow
 @InitiatedBy(DepositoryBuyFlow.class)
+@Slf4j
 public class APSellCompletionFlow extends FlowLogic<SignedTransaction> {
 
     static private final Logger logger = LoggerFactory.getLogger(APSellCompletionFlow.class);
@@ -41,7 +43,7 @@ public class APSellCompletionFlow extends FlowLogic<SignedTransaction> {
 
     public APSellCompletionFlow(FlowSession flowSession) {
         this.flowSession = flowSession;
-        System.out.println("Inside APSellCompletionFlow called by " + flowSession.getCounterparty());
+        log.info("Inside APSellCompletionFlow called by " + flowSession.getCounterparty());
     }
 
     @Suspendable

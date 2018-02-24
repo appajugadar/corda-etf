@@ -14,8 +14,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import lombok.extern.slf4j.Slf4j;
 import net.corda.core.contracts.Amount;
-import net.corda.core.contracts.Issued;
 import net.corda.core.contracts.StateAndRef;
 import net.corda.core.identity.CordaX500Name;
 import net.corda.core.identity.Party;
@@ -45,6 +45,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CREATED;
 
 @Path("rest")
+@Slf4j
 public class RestApi {
 
     static private final Logger logger = LoggerFactory.getLogger(RestApi.class);
@@ -77,7 +78,7 @@ public class RestApi {
         try {
             FlowProgressHandle<SignedTransaction> flowHandle = rpcOps
                     .startTrackedFlowDynamic(APBuyFlow.class, quantity, securityName, depositoryParty);
-            flowHandle.getProgress().subscribe(evt -> System.out.printf(">> %s\n", evt));
+            flowHandle.getProgress().subscribe(evt -> log.info(">> %s\n", evt));
 
             // The line below blocks and waits for the flow to return.
             final SignedTransaction result = flowHandle
@@ -99,7 +100,7 @@ public class RestApi {
     @Path("SellRequests")
     @Produces(MediaType.APPLICATION_JSON)
     public List<StateAndRef<SecuritySellState>> getSellRequests() {
-        List<StateAndRef<SecuritySellState>> ref =  rpcOps.vaultQuery(SecuritySellState.class).getStates();
+        List<StateAndRef<SecuritySellState>> ref = rpcOps.vaultQuery(SecuritySellState.class).getStates();
         return ref;
     }
 
@@ -107,7 +108,7 @@ public class RestApi {
     @Path("UnMatchedSellRequests")
     @Produces(MediaType.APPLICATION_JSON)
     public List<SecuritySellState> getUnMatchedSellRequests() {
-        List<StateAndRef<SecuritySellState>> ref =  rpcOps.vaultQuery(SecuritySellState.class).getStates();
+        List<StateAndRef<SecuritySellState>> ref = rpcOps.vaultQuery(SecuritySellState.class).getStates();
         return RequestHelper.getUnmatchedSecuritySellState(ref);
     }
 
@@ -115,7 +116,7 @@ public class RestApi {
     @Path("UnMatchedBuyRequests")
     @Produces(MediaType.APPLICATION_JSON)
     public List<SecurityBuyState> getUnMatchedBuyRequests() {
-        List<StateAndRef<SecurityBuyState>> ref =  rpcOps.vaultQuery(SecurityBuyState.class).getStates();
+        List<StateAndRef<SecurityBuyState>> ref = rpcOps.vaultQuery(SecurityBuyState.class).getStates();
         return RequestHelper.getUnmatchedSecurityBuyState(ref);
     }
 
@@ -131,7 +132,7 @@ public class RestApi {
         try {
             FlowProgressHandle<SignedTransaction> flowHandle = rpcOps
                     .startTrackedFlowDynamic(APSellFlow.class, quantity, securityName, depositoryParty);
-            flowHandle.getProgress().subscribe(evt -> System.out.printf(">> %s\n", evt));
+            flowHandle.getProgress().subscribe(evt -> log.info(">> %s\n", evt));
 
             // The line below blocks and waits for the flow to return.
             final SignedTransaction result = flowHandle

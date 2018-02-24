@@ -2,6 +2,7 @@ package com.cts.corda.etf.flows;
 
 import co.paralleluniverse.fibers.Suspendable;
 import com.cts.corda.etf.contract.SecurityStock;
+import lombok.extern.slf4j.Slf4j;
 import net.corda.core.contracts.Command;
 import net.corda.core.contracts.PartyAndReference;
 import net.corda.core.contracts.StateAndContract;
@@ -19,6 +20,7 @@ import static com.cts.corda.etf.contract.SecurityStock.SECURITY_STOCK_CONTRACT;
 
 @StartableByRPC
 @InitiatingFlow
+@Slf4j
 public class SecurityIssueFlow extends FlowLogic<SignedTransaction> {
 
     private final ProgressTracker.Step INITIALISING = new ProgressTracker.Step("Performing initial steps.");
@@ -59,23 +61,23 @@ public class SecurityIssueFlow extends FlowLogic<SignedTransaction> {
     @Override
     public SignedTransaction call() throws FlowException {
 
-        System.out.print("Called SecurityIssueFlow for quantity " + guantity + " securityName " + securityName);
+        log.info("Called SecurityIssueFlow for quantity " + guantity + " securityName " + securityName);
 
         PartyAndReference issuer = this.getOurIdentity().ref(OpaqueBytes.of((securityName + guantity).getBytes()));
 
         SecurityStock.State etfTradeState = new SecurityStock.State(issuer, getOurIdentity(), securityName, guantity);
 
-        System.out.print("etfTradeState -->> " + etfTradeState);
+        log.info("etfTradeState -->> " + etfTradeState);
 
         final Command<SecurityStock.Commands.Issue> txCommand = new Command<>(new SecurityStock.Commands.Issue(), etfTradeState.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
 
-        System.out.println("Inside EtfIssue flow BUILDING tx");
+        log.info("Inside EtfIssue flow BUILDING tx");
         // Step 2. build tx.
         progressTracker.setCurrentStep(BUILDING);
         final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
         final TransactionBuilder txBuilder = new TransactionBuilder(notary).withItems(new StateAndContract(etfTradeState, SECURITY_STOCK_CONTRACT), txCommand);
 
-        System.out.println("Inside EtfIssue flow verify tx");
+        log.info("Inside EtfIssue flow verify tx");
         // Stage 3. verify tx
         progressTracker.setCurrentStep(VERIFYING_TRANSACTION);
 
@@ -88,7 +90,7 @@ public class SecurityIssueFlow extends FlowLogic<SignedTransaction> {
         progressTracker.setCurrentStep(SIGNING);
         final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
 
-        System.out.println("Inside EtfIssue flow finalize tx");
+        log.info("Inside EtfIssue flow finalize tx");
 
         // Stage 6. finalise tx;
         progressTracker.setCurrentStep(FINALISING_TRANSACTION);
@@ -118,7 +120,7 @@ public class SecurityIssueFlow extends FlowLogic<SignedTransaction> {
 
                 @Override
                 protected void checkTransaction(SignedTransaction stx) {
-                    System.out.print("Inside check transaction for self issue etf");
+                    log.info("Inside check transaction for self issue etf");
                 }
             }
 

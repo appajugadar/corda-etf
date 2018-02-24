@@ -2,6 +2,9 @@ package com.cts.corda.etf.state;
 
 import com.cts.corda.etf.schema.BuySchemaV1;
 import com.google.common.collect.ImmutableList;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import net.corda.core.contracts.LinearState;
 import net.corda.core.contracts.UniqueIdentifier;
 import net.corda.core.identity.AbstractParty;
@@ -18,14 +21,29 @@ import java.util.List;
  * <p>
  * A state must implement [ContractState] or one of its descendants.
  */
+@Slf4j
 public class SecurityBuyState implements LinearState, QueryableState {
 
+    @Getter
+    @Setter
     private UniqueIdentifier linearId;
+    @Getter
+    @Setter
     private Integer quantity;
+    @Getter
+    @Setter
     private String securityName;
+    @Getter
+    @Setter
     private Party seller;
+    @Getter
+    @Setter
     private Party buyer;
+    @Getter
+    @Setter
     private Party depository;
+    @Getter
+    @Setter
     private String status;
 
     /**
@@ -66,63 +84,6 @@ public class SecurityBuyState implements LinearState, QueryableState {
         this.buyer = null;
         this.depository = null;
         this.linearId = new UniqueIdentifier();
-    }
-
-    public String getSecurityName() {
-        return securityName;
-    }
-
-    public void setSecurityName(String securityName) {
-        this.securityName = securityName;
-    }
-
-    public Party getDepository() {
-        return depository;
-    }
-
-    public void setDepository(Party depository) {
-        this.depository = depository;
-    }
-
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
-    public Party getSeller() {
-        return seller;
-    }
-
-    public void setSeller(Party seller) {
-        this.seller = seller;
-    }
-
-    public Party getBuyer() {
-        return buyer;
-    }
-
-    public void setBuyer(Party buyer) {
-        this.buyer = buyer;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    @Override
-    public UniqueIdentifier getLinearId() {
-        return linearId;
-    }
-
-    public void setLinearId(UniqueIdentifier linearId) {
-        this.linearId = linearId;
     }
 
     @Override

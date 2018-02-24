@@ -6,6 +6,7 @@ import com.cts.corda.etf.contract.SellContract;
 import com.cts.corda.etf.flow.buy.APBuyCompletionFlow;
 import com.cts.corda.etf.state.SecuritySellState;
 import com.google.common.collect.Sets;
+import lombok.extern.slf4j.Slf4j;
 import net.corda.core.contracts.Command;
 import net.corda.core.contracts.PartyAndReference;
 import net.corda.core.contracts.StateAndContract;
@@ -24,9 +25,11 @@ import java.util.stream.Collectors;
 
 import static com.cts.corda.etf.contract.SecurityStock.SECURITY_STOCK_CONTRACT;
 import static com.cts.corda.etf.contract.SellContract.SELL_SECURITY_CONTRACT_ID;
+import static com.cts.corda.etf.util.Constants.SELL_MATCHED;
 
 @InitiatingFlow
 @InitiatedBy(APBuyCompletionFlow.class)
+@Slf4j
 public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
 
     static private final Logger logger = LoggerFactory.getLogger(ApSellSettleFlow.class);
@@ -34,13 +37,13 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
 
     public ApSellSettleFlow(FlowSession flowSession) {
         this.flowSession = flowSession;
-        System.out.println("Inside ApSellSettleFlow called by " + flowSession.getCounterparty());
+        log.info("Inside ApSellSettleFlow called by " + flowSession.getCounterparty());
     }
 
     @Suspendable
     @Override
     public SignedTransaction call() throws FlowException {
-        System.out.println("Inside ApSellSettleFlow call " + flowSession.getCounterparty());
+        log.info("Inside ApSellSettleFlow call " + flowSession.getCounterparty());
 
         List<StateAndRef<SecurityStock.State>> etfTradeStatesQueryResp = getServiceHub().getVaultService().queryBy(SecurityStock.State.class).getStates();
         SecurityStock.State securityState = null;
@@ -72,7 +75,7 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
         //FlowSession fs = initiateFlow(flowSession.getCounterparty());
         final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(flowSession), CollectSignaturesFlow.Companion.tracker()));
 
-        System.out.println("Inside EtfIssue flow finalize tx11");
+        log.info("Inside EtfIssue flow finalize tx11");
         SignedTransaction fullySignedTx1 = subFlow(new FinalityFlow(fullySignedTx));
 
 
@@ -83,7 +86,7 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
 
         for (StateAndRef<SecuritySellState> stateref : ref) {
             securitySellState = stateref.getState().getData();
-            if (securitySellState.getStatus().equals("SELL_MATCHED")) {
+            if (securitySellState.getStatus().equals(SELL_MATCHED)) {
 
             }
         }
@@ -91,7 +94,7 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
         if (securitySellState != null) {
             //update sell state
             securitySellState.setBuyer(flowSession.getCounterparty());
-            securitySellState.setStatus("SELL_MATCHED");
+            securitySellState.setStatus(SELL_MATCHED);
             final Command<SellContract.Commands.Create> txCommand2 = new Command<>(new SellContract.Commands.Create(),
                     securitySellState.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
             final TransactionBuilder txBuilder2 = new TransactionBuilder(notary).withItems(new StateAndContract(securitySellState, SELL_SECURITY_CONTRACT_ID), txCommand2);
@@ -119,13 +122,13 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
 
         public ReportToRegulatorFlow(SignedTransaction fullySignedTx) {
             this.fullySignedTx = fullySignedTx;
-            System.out.println("Inside ReportToRegulatorFlow for SellRequest called by ");
+            log.info("Inside ReportToRegulatorFlow for SellRequest called by ");
         }
 
         @Override
         @Suspendable
         public String call() throws FlowException {
-            System.out.println("Inside ReportToRegulatorFlow for SellRequest call method ");
+            log.info("Inside ReportToRegulatorFlow for SellRequest call method ");
             Party regulator = (Party) getServiceHub().getIdentityService().partiesFromName("Regulator", true).toArray()[0];
             FlowSession session = initiateFlow(regulator);
             subFlow(new SendTransactionFlow(session, fullySignedTx));

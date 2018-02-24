@@ -7,6 +7,7 @@ import com.cts.corda.etf.state.SecurityBuyState;
 import com.cts.corda.etf.state.SecuritySellState;
 import com.cts.corda.etf.util.RequestHelper;
 import com.google.common.collect.Sets;
+import lombok.extern.slf4j.Slf4j;
 import net.corda.core.contracts.Command;
 import net.corda.core.contracts.ContractState;
 import net.corda.core.contracts.StateAndContract;
@@ -25,11 +26,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.cts.corda.etf.contract.SellContract.SELL_SECURITY_CONTRACT_ID;
+import static com.cts.corda.etf.util.Constants.BUY_MATCHED;
+import static com.cts.corda.etf.util.Constants.SELL_MATCHED;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 
 @InitiatedBy(APBuyFlow.class)
 @InitiatingFlow
+@Slf4j
 public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
 
     static private final Logger logger = LoggerFactory.getLogger(DepositoryBuyFlow.class);
@@ -37,7 +41,7 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
 
     public DepositoryBuyFlow(FlowSession flowSession) {
         this.flowSession = flowSession;
-        System.out.println("Inside DepositoryBuyFlow called by " + flowSession.getCounterparty());
+        log.info("Inside DepositoryBuyFlow called by " + flowSession.getCounterparty());
     }
 
     @Suspendable
@@ -50,8 +54,8 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
         Vault.Page<SecuritySellState> results = getServiceHub().getVaultService().queryBy(SecuritySellState.class);
         List<SecuritySellState> securitySellStateList = RequestHelper.getUnmatchedSecuritySellState(results.getStates());
 
-        SecuritySellState securitySellState=null;
-        if(!securitySellStateList.isEmpty()){
+        SecuritySellState securitySellState = null;
+        if (!securitySellStateList.isEmpty()) {
             securitySellState = securitySellStateList.get(0);
         }
 
@@ -61,7 +65,7 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
             //update sell state
 
             securitySellState.setBuyer(flowSession.getCounterparty());
-            securitySellState.setStatus("SELL_MATCHED");
+            securitySellState.setStatus(SELL_MATCHED);
             // Obtain a reference to the notary we want to use.
             final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
             final Command<SellContract.Commands.Create> txCommand = new Command<>(new SellContract.Commands.Create(),
@@ -77,7 +81,7 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
 
             SecurityBuyState output = new SecurityBuyState();
             output.setSeller(securitySellState.getSeller());
-            output.setStatus("BUY_MATCHED");
+            output.setStatus(BUY_MATCHED);
             output.setLinearId(securitySellState.getLinearId());
             //  flowSession.send(output);
 
@@ -116,7 +120,7 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
 
                 if (securitySellState != null) {
                     newBuyState.setSeller(securitySellState.getSeller());
-                    newBuyState.setStatus("BUY_MATCHED");
+                    newBuyState.setStatus(BUY_MATCHED);
                 }
 
                 logger.info("Adding new state to o/p");

@@ -4,6 +4,7 @@ import co.paralleluniverse.fibers.Suspendable;
 import com.cts.corda.etf.contract.BuyContract;
 import com.cts.corda.etf.state.SecurityBuyState;
 import com.google.common.collect.Sets;
+import lombok.extern.slf4j.Slf4j;
 import net.corda.core.contracts.Command;
 import net.corda.core.contracts.StateAndContract;
 import net.corda.core.flows.*;
@@ -18,10 +19,12 @@ import org.slf4j.LoggerFactory;
 import java.util.stream.Collectors;
 
 import static com.cts.corda.etf.contract.BuyContract.BUY_SECURITY_CONTRACT_ID;
+import static com.cts.corda.etf.util.Constants.BUY_STARTED;
 
 
 @InitiatingFlow
 @StartableByRPC
+@Slf4j
 public class APBuyFlow extends FlowLogic<SignedTransaction> {
 
     private final int iouValue;
@@ -81,7 +84,7 @@ public class APBuyFlow extends FlowLogic<SignedTransaction> {
         // Generate an unsigned transaction.
         Party buyer = getServiceHub().getMyInfo().getLegalIdentities().get(0);
 
-        SecurityBuyState securityBuyState = new SecurityBuyState(iouValue, securityName, "BUY_START", buyer, depositoryParty);
+        SecurityBuyState securityBuyState = new SecurityBuyState(iouValue, securityName, BUY_STARTED, buyer, depositoryParty);
         final Command<BuyContract.Commands.Create> txCommand = new Command<>(new BuyContract.Commands.Create(),
                 securityBuyState.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
         final TransactionBuilder txBuilder = new TransactionBuilder(notary).withItems(new StateAndContract(securityBuyState,
@@ -119,7 +122,7 @@ public class APBuyFlow extends FlowLogic<SignedTransaction> {
         public APBuySubFlow(FlowSession flowSession, SecurityBuyState securityBuyState) {
             this.flowSession = flowSession;
             this.securityBuyState = securityBuyState;
-            System.out.println("Inside APBuySubFlow called by " + flowSession.getCounterparty());
+            log.info("Inside APBuySubFlow called by " + flowSession.getCounterparty());
         }
 
         @Suspendable

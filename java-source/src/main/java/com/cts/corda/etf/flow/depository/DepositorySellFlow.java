@@ -7,6 +7,7 @@ import com.cts.corda.etf.state.SecurityBuyState;
 import com.cts.corda.etf.state.SecuritySellState;
 import com.cts.corda.etf.util.RequestHelper;
 import com.google.common.collect.Sets;
+import lombok.extern.slf4j.Slf4j;
 import net.corda.core.contracts.Command;
 import net.corda.core.contracts.ContractState;
 import net.corda.core.contracts.StateAndContract;
@@ -23,11 +24,13 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.cts.corda.etf.util.Constants.BUY_MATCHED;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 
 @InitiatedBy(APSellFlow.class)
 @InitiatingFlow
+@Slf4j
 public class DepositorySellFlow extends FlowLogic<SignedTransaction> {
 
     static private final Logger logger = LoggerFactory.getLogger(DepositorySellFlow.class);
@@ -35,7 +38,7 @@ public class DepositorySellFlow extends FlowLogic<SignedTransaction> {
 
     public DepositorySellFlow(FlowSession flowSession) {
         this.flowSession = flowSession;
-        System.out.println("Inside DepositorySellFlow called by " + flowSession.getCounterparty());
+        log.info("Inside DepositorySellFlow called by " + flowSession.getCounterparty());
     }
 
     @Suspendable
@@ -50,7 +53,7 @@ public class DepositorySellFlow extends FlowLogic<SignedTransaction> {
 
         SecurityBuyState securityBuyState = null;
 
-        if(!securityBuyStateList.isEmpty()){
+        if (!securityBuyStateList.isEmpty()) {
             securityBuyState = securityBuyStateList.get(0);
         }
 
@@ -58,7 +61,7 @@ public class DepositorySellFlow extends FlowLogic<SignedTransaction> {
         if (securityBuyState != null) {
             //update sell state
             securityBuyState.setSeller(flowSession.getCounterparty());
-            securityBuyState.setStatus("BUY_MATCHED");
+            securityBuyState.setStatus(BUY_MATCHED);
 
             // Obtain a reference to the notary we want to use.
             final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);

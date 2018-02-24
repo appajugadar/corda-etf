@@ -4,6 +4,7 @@ import co.paralleluniverse.fibers.Suspendable;
 import com.cts.corda.etf.contract.SellContract;
 import com.cts.corda.etf.state.SecuritySellState;
 import com.google.common.collect.Sets;
+import lombok.extern.slf4j.Slf4j;
 import net.corda.core.contracts.Command;
 import net.corda.core.contracts.StateAndContract;
 import net.corda.core.flows.*;
@@ -18,10 +19,12 @@ import org.slf4j.LoggerFactory;
 import java.util.stream.Collectors;
 
 import static com.cts.corda.etf.contract.SellContract.SELL_SECURITY_CONTRACT_ID;
+import static com.cts.corda.etf.util.Constants.SELL_STARTED;
 
 
 @InitiatingFlow
 @StartableByRPC
+@Slf4j
 public class APSellFlow extends FlowLogic<SignedTransaction> {
 
     static private final Logger logger = LoggerFactory.getLogger(APSellFlow.class);
@@ -81,7 +84,7 @@ public class APSellFlow extends FlowLogic<SignedTransaction> {
         progressTracker.setCurrentStep(GENERATING_TRANSACTION);
         // Generate an unsigned transaction.
         Party seller = getServiceHub().getMyInfo().getLegalIdentities().get(0);
-        SecuritySellState securitySellState = new SecuritySellState(quantity, securityName, "SELL_START", seller, depositoryParty);
+        SecuritySellState securitySellState = new SecuritySellState(quantity, securityName, SELL_STARTED, seller, depositoryParty);
 
         final Command<SellContract.Commands.Create> txCommand = new Command<>(new SellContract.Commands.Create(),
                 securitySellState.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));

@@ -1,6 +1,7 @@
 package com.cts.corda.etf.client;
 
 import com.cts.corda.etf.state.SecurityBuyState;
+import lombok.extern.slf4j.Slf4j;
 import net.corda.client.rpc.CordaRPCClient;
 import net.corda.client.rpc.CordaRPCClientConfiguration;
 import net.corda.core.contracts.StateAndRef;
@@ -19,6 +20,7 @@ import java.util.concurrent.ExecutionException;
  * Demonstration of using the CordaRPCClient to connect to a Corda Node and
  * steam some State data from the node.
  */
+@Slf4j
 public class ExampleClientRPC {
     private static final Logger logger = LoggerFactory.getLogger(ExampleClientRPC.class);
 

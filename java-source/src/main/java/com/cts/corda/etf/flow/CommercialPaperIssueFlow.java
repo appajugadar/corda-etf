@@ -1,8 +1,8 @@
 package com.cts.corda.etf.flow;
 
 import co.paralleluniverse.fibers.Suspendable;
-import com.cts.corda.etf.contract.SecurityStock;
 import com.cts.corda.etf.state.CommercialPaper;
+import lombok.extern.slf4j.Slf4j;
 import net.corda.core.contracts.*;
 import net.corda.core.flows.*;
 import net.corda.core.identity.AbstractParty;
@@ -20,6 +20,7 @@ import static com.cts.corda.etf.state.CommercialPaper.JCP_PROGRAM_ID;
 
 @StartableByRPC
 @InitiatingFlow
+@Slf4j
 public class CommercialPaperIssueFlow extends FlowLogic<SignedTransaction> {
 
     private final ProgressTracker.Step INITIALISING = new ProgressTracker.Step("Performing initial steps.");
@@ -60,28 +61,28 @@ public class CommercialPaperIssueFlow extends FlowLogic<SignedTransaction> {
     @Override
     public SignedTransaction call() throws FlowException {
 
-        System.out.print("Called CommercialPaperIssueFlow for faceValue " + faceValue + " maturityDate " + maturityDate);
+        log.info("Called CommercialPaperIssueFlow for faceValue " + faceValue + " maturityDate " + maturityDate);
 
         PartyAndReference issuer = this.getOurIdentity().ref(OpaqueBytes.of((faceValue.toString() + maturityDate.toString()).getBytes()));
-        Amount<Issued<Currency>>  amount = new Amount(faceValue.getQuantity(), new Issued<>(issuer, faceValue.getToken()));
+        Amount<Issued<Currency>> amount = new Amount(faceValue.getQuantity(), new Issued<>(issuer, faceValue.getToken()));
         CommercialPaper.State cpState = new CommercialPaper.State(issuer, getOurIdentity(), amount, maturityDate);
 
-        System.out.print("etfTradeState -->> " + cpState);
+        log.info("etfTradeState -->> " + cpState);
 
         final Command<CommercialPaper.Commands.Issue> txCommand = new Command<>(new CommercialPaper.Commands.Issue(), cpState.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
 
-        System.out.println("Inside EtfIssue flow BUILDING tx");
+        log.info("Inside EtfIssue flow BUILDING tx");
         // Step 2. build tx.
         progressTracker.setCurrentStep(BUILDING);
         final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
         final TransactionBuilder txBuilder = new TransactionBuilder(notary).withItems(new StateAndContract(cpState, JCP_PROGRAM_ID), txCommand);
 
-        System.out.println("Inside EtfIssue flow verify tx");
+        log.info("Inside EtfIssue flow verify tx");
         // Stage 3. verify tx
         progressTracker.setCurrentStep(VERIFYING_TRANSACTION);
 
         // Verify that the transaction is valid.
-        getLogger().info("Before verify TX");
+        log.info("Before verify TX");
         txBuilder.verify(getServiceHub());
 
 
@@ -89,7 +90,7 @@ public class CommercialPaperIssueFlow extends FlowLogic<SignedTransaction> {
         progressTracker.setCurrentStep(SIGNING);
         final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
 
-        System.out.println("Inside EtfIssue flow finalize tx");
+        log.info("Inside EtfIssue flow finalize tx");
 
         // Stage 6. finalise tx;
         progressTracker.setCurrentStep(FINALISING_TRANSACTION);
@@ -119,7 +120,7 @@ public class CommercialPaperIssueFlow extends FlowLogic<SignedTransaction> {
 
                 @Override
                 protected void checkTransaction(SignedTransaction stx) {
-                    System.out.print("Inside check transaction for self issue etf");
+                    log.info("Inside check transaction for self issue etf");
                 }
             }
 

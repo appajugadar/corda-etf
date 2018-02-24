@@ -1,6 +1,7 @@
 package com.cts.corda.etf.contract;
 
 import kotlin.Unit;
+import lombok.extern.slf4j.Slf4j;
 import net.corda.core.contracts.*;
 import net.corda.core.crypto.NullKeys;
 import net.corda.core.identity.AbstractParty;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 import static net.corda.core.contracts.ContractsDSL.requireSingleCommand;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 
-
+@Slf4j
 public class SecurityStock implements Contract {
 
     public static final String SECURITY_STOCK_CONTRACT = "com.cts.corda.etf.contract.SecurityStock";

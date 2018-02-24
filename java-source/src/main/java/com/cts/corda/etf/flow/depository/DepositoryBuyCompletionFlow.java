@@ -4,6 +4,7 @@ import co.paralleluniverse.fibers.Suspendable;
 import com.cts.corda.etf.flow.buy.APBuyFlow;
 import com.cts.corda.etf.state.SecurityBuyState;
 import com.cts.corda.etf.state.SecuritySellState;
+import lombok.extern.slf4j.Slf4j;
 import net.corda.core.contracts.ContractState;
 import net.corda.core.contracts.StateAndRef;
 import net.corda.core.flows.*;
@@ -15,11 +16,13 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+import static com.cts.corda.etf.util.Constants.SELL_MATCHED;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 
 @InitiatedBy(APBuyFlow.APBuySubFlow.class)
 @InitiatingFlow
+@Slf4j
 public class DepositoryBuyCompletionFlow extends FlowLogic<SignedTransaction> {
 
     static private final Logger logger = LoggerFactory.getLogger(DepositoryBuyCompletionFlow.class);
@@ -27,7 +30,7 @@ public class DepositoryBuyCompletionFlow extends FlowLogic<SignedTransaction> {
 
     public DepositoryBuyCompletionFlow(FlowSession flowSession) {
         this.flowSession = flowSession;
-        System.out.println("Inside DepositoryBuyCompletionFlow called by " + flowSession.getCounterparty());
+        log.info("Inside DepositoryBuyCompletionFlow called by " + flowSession.getCounterparty());
     }
 
     @Suspendable
@@ -48,7 +51,7 @@ public class DepositoryBuyCompletionFlow extends FlowLogic<SignedTransaction> {
         logger.info("DepositoryBuyFlow flowSession " + flowSession.getCounterpartyFlowInfo());
         logger.info("Sending back sign to APBuy Sub Flow " + securitySellState);
 
-        if (securitySellState != null && securitySellState.getStatus().equals("SELL_MATCHED")) {
+        if (securitySellState != null && securitySellState.getStatus().equals(SELL_MATCHED)) {
             SignedTransaction tx = subFlow(new SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker()));
             return tx;
         } else {

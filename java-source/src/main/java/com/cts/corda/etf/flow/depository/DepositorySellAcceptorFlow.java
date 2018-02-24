@@ -2,6 +2,7 @@ package com.cts.corda.etf.flow.depository;
 
 import co.paralleluniverse.fibers.Suspendable;
 import com.cts.corda.etf.flow.sell.ApSellSettleFlow;
+import lombok.extern.slf4j.Slf4j;
 import net.corda.core.flows.*;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.utilities.ProgressTracker;
@@ -12,6 +13,7 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 @InitiatedBy(ApSellSettleFlow.class)
 @InitiatingFlow
+@Slf4j
 public class DepositorySellAcceptorFlow extends FlowLogic<SignedTransaction> {
 
     static private final Logger logger = LoggerFactory.getLogger(DepositorySellFlow.class);
@@ -19,7 +21,7 @@ public class DepositorySellAcceptorFlow extends FlowLogic<SignedTransaction> {
 
     public DepositorySellAcceptorFlow(FlowSession flowSession) {
         this.flowSession = flowSession;
-        System.out.println("Inside DepositorySellAcceptorFlow called by " + flowSession.getCounterparty());
+        log.info("Inside DepositorySellAcceptorFlow called by " + flowSession.getCounterparty());
     }
 
     @Suspendable

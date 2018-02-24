@@ -1,5 +1,6 @@
 package com.cts.corda.etf.flow;
 
+import lombok.extern.slf4j.Slf4j;
 import net.corda.core.flows.FlowException;
 import net.corda.core.flows.FlowLogic;
 import net.corda.core.flows.FlowSession;
@@ -11,7 +12,7 @@ import net.corda.core.utilities.ProgressTracker;
 
 import java.util.List;
 
-
+@Slf4j
 abstract class AbstractIssueFlow extends FlowLogic<SignedTransaction> {
 
     Party getFirstNotary() throws FlowException {

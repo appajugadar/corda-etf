@@ -10,6 +10,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.cts.corda.etf.util.Constants.BUY_MATCHED;
+import static com.cts.corda.etf.util.Constants.SELL_MATCHED;
+
 public class RequestHelper {
 
     public static List<SecuritySellState> getUnmatchedSecuritySellState(List<StateAndRef<SecuritySellState>> ref) {
@@ -17,14 +20,14 @@ public class RequestHelper {
         Map<UniqueIdentifier, SecuritySellState> requestsMap = new HashMap();
         for (StateAndRef<SecuritySellState> stateref : ref) {
             SecuritySellState securitySellState = stateref.getState().getData();
-            if (!securitySellState.getStatus().equals("SELL_MATCHED")) {
+            if (!securitySellState.getStatus().equals(SELL_MATCHED)) {
                 requestsMap.put(securitySellState.getLinearId(), securitySellState);
             }
         }
 
         for (StateAndRef<SecuritySellState> stateref : ref) {
             SecuritySellState securitySellState = stateref.getState().getData();
-            if (securitySellState.getStatus().equals("SELL_MATCHED")) {
+            if (securitySellState.getStatus().equals(SELL_MATCHED)) {
                 requestsMap.remove(securitySellState.getLinearId());
             }
         }
@@ -40,14 +43,14 @@ public class RequestHelper {
         Map<UniqueIdentifier, SecurityBuyState> requestsMap = new HashMap();
         for (StateAndRef<SecurityBuyState> stateref : ref) {
             SecurityBuyState securityBuyState = stateref.getState().getData();
-            if (!securityBuyState.getStatus().equals("BUY_MATCHED")) {
+            if (!securityBuyState.getStatus().equals(BUY_MATCHED)) {
                 requestsMap.put(securityBuyState.getLinearId(), securityBuyState);
             }
         }
 
         for (StateAndRef<SecurityBuyState> stateref : ref) {
             SecurityBuyState securityBuyState = stateref.getState().getData();
-            if (securityBuyState.getStatus().equals("BUY_MATCHED")) {
+            if (securityBuyState.getStatus().equals(BUY_MATCHED)) {
                 requestsMap.remove(securityBuyState.getLinearId());
             }
         }

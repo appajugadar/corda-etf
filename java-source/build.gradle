@@ -8,6 +8,7 @@ repositories {
 }
 
 apply plugin: 'java'
+apply plugin: 'idea'
 apply plugin: 'net.corda.plugins.cordformation'
 apply plugin: 'net.corda.plugins.quasar-utils'
 
@@ -47,7 +48,7 @@ dependencies {
     cordaCompile "$corda_release_group:corda-webserver-impl:$corda_release_version"
     cordaRuntime "$corda_release_group:corda:$corda_release_version"
     cordaRuntime "$corda_release_group:corda-webserver:$corda_release_version"
-
+    cordaCompile "org.projectlombok:lombok:1.16.20"
     testCompile "$corda_release_group:corda-node-driver:$corda_release_version"
 
     // PlantUML: For the generation of sequence diagrams of the flows
