@@ -17,8 +17,6 @@ import net.corda.core.identity.Party;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.OpaqueBytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,7 +30,6 @@ import static com.cts.corda.etf.util.Constants.SELL_MATCHED;
 @Slf4j
 public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
 
-    static private final Logger logger = LoggerFactory.getLogger(ApSellSettleFlow.class);
     private final FlowSession flowSession;
 
     public ApSellSettleFlow(FlowSession flowSession) {
@@ -102,7 +99,7 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
             final SignedTransaction partSignedTx2 = getServiceHub().signInitialTransaction(txBuilder2);
 
             FlowSession depositorySession = initiateFlow(securitySellState.getDepository());
-            logger.info("AP Sell flow initiated depo flow ");
+            log.info("AP Sell flow initiated depo flow ");
             // Send the state to the counterparty, and receive it back with their signature.
             final SignedTransaction fullySignedTx2 = subFlow(new CollectSignaturesFlow(partSignedTx2, Sets.newHashSet(depositorySession), CollectSignaturesFlow.Companion.tracker()));
             subFlow(new FinalityFlow(fullySignedTx2));

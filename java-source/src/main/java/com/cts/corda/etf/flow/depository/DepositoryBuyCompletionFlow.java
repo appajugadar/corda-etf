@@ -11,8 +11,6 @@ import net.corda.core.flows.*;
 import net.corda.core.node.services.Vault;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.utilities.ProgressTracker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
@@ -24,8 +22,6 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
 @InitiatingFlow
 @Slf4j
 public class DepositoryBuyCompletionFlow extends FlowLogic<SignedTransaction> {
-
-    static private final Logger logger = LoggerFactory.getLogger(DepositoryBuyCompletionFlow.class);
     private final FlowSession flowSession;
 
     public DepositoryBuyCompletionFlow(FlowSession flowSession) {
@@ -37,7 +33,7 @@ public class DepositoryBuyCompletionFlow extends FlowLogic<SignedTransaction> {
     @Override
     public SignedTransaction call() throws FlowException {
 
-        logger.info("DepositoryBuyFlow inside call method ");
+        log.info("DepositoryBuyFlow inside call method ");
 
         //check vault for sell states and if found then return
         Vault.Page<SecuritySellState> results = getServiceHub().getVaultService().queryBy(SecuritySellState.class);
@@ -48,8 +44,8 @@ public class DepositoryBuyCompletionFlow extends FlowLogic<SignedTransaction> {
             securitySellState = stateref.getState().getData();
         }
 
-        logger.info("DepositoryBuyFlow flowSession " + flowSession.getCounterpartyFlowInfo());
-        logger.info("Sending back sign to APBuy Sub Flow " + securitySellState);
+        log.info("DepositoryBuyFlow flowSession " + flowSession.getCounterpartyFlowInfo());
+        log.info("Sending back sign to APBuy Sub Flow " + securitySellState);
 
         if (securitySellState != null && securitySellState.getStatus().equals(SELL_MATCHED)) {
             SignedTransaction tx = subFlow(new SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker()));

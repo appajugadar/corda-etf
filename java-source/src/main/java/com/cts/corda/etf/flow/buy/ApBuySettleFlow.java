@@ -7,8 +7,6 @@ import net.corda.core.contracts.ContractState;
 import net.corda.core.flows.*;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.utilities.ProgressTracker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 
@@ -17,7 +15,6 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
 @Slf4j
 public class ApBuySettleFlow extends FlowLogic<SignedTransaction> {
 
-    static private final Logger logger = LoggerFactory.getLogger(ApBuySettleFlow.class);
     private final FlowSession flowSession;
 
     public ApBuySettleFlow(FlowSession flowSession) {
@@ -28,7 +25,7 @@ public class ApBuySettleFlow extends FlowLogic<SignedTransaction> {
     @Suspendable
     @Override
     public SignedTransaction call() throws FlowException {
-        logger.info("ApBuySettleFlow inside call method ");
+        log.info("ApBuySettleFlow inside call method ");
         SignedTransaction tx = subFlow(new ApBuySettleFlow.SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker()));
         return tx;
     }
@@ -43,7 +40,7 @@ public class ApBuySettleFlow extends FlowLogic<SignedTransaction> {
         protected void checkTransaction(SignedTransaction stx) {
             requireThat(require -> {
                 ContractState output = stx.getTx().getOutputs().get(0).getData();
-                logger.info("ApBuySettleFlow output " + output);
+                log.info("ApBuySettleFlow output " + output);
                 return null;
             });
         }

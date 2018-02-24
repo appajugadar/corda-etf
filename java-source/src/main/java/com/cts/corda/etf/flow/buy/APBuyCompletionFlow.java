@@ -11,8 +11,6 @@ import net.corda.core.identity.Party;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.utilities.ProgressTracker;
 import net.corda.finance.flows.CashPaymentFlow;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Currency;
@@ -26,7 +24,6 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
 @Slf4j
 public class APBuyCompletionFlow extends FlowLogic<String> {
 
-    static private final Logger logger = LoggerFactory.getLogger(APBuyCompletionFlow.class);
     private final FlowSession flowSession;
 
     public APBuyCompletionFlow(FlowSession flowSession) {
@@ -37,7 +34,7 @@ public class APBuyCompletionFlow extends FlowLogic<String> {
     @Suspendable
     @Override
     public String call() throws FlowException {
-        logger.info("APBuyCompletionFlow inside call method ");
+        log.info("APBuyCompletionFlow inside call method ");
 
         SignedTransaction stx = subFlow(new APBuyCompletionFlow.SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker()));
         ContractState output = stx.getTx().getOutputs().get(0).getData();
@@ -52,12 +49,12 @@ public class APBuyCompletionFlow extends FlowLogic<String> {
         CashPaymentFlow.PaymentRequest paymentRequest = new CashPaymentFlow.PaymentRequest(amount, buyState.getSeller(), false, new HashSet<>());
         subFlow(new CashPaymentFlow(paymentRequest));
 
-        logger.info("securitySellState.getSeller() " + buyState.getSeller());
+        log.info("securitySellState.getSeller() " + buyState.getSeller());
         FlowSession sellerSession = initiateFlow(buyState.getSeller());
 
         //TODO send linear id to seller  sellerSession.send(buyState.getSellerStateLinearId());
 
-        logger.info("sellerSession.getCounterpartyFlowInfo() " + sellerSession.getCounterpartyFlowInfo());
+        log.info("sellerSession.getCounterpartyFlowInfo() " + sellerSession.getCounterpartyFlowInfo());
 
         //Report to regulator
         subFlow(new ReportToRegulatorFlow(stx));
@@ -76,7 +73,7 @@ public class APBuyCompletionFlow extends FlowLogic<String> {
                 ContractState output = stx.getTx().getOutputs().get(0).getData();
                 require.using("This must be an SecurityBuy transaction.", output instanceof SecurityBuyState);
                 SecurityBuyState newSellState = (SecurityBuyState) output;
-                logger.info("Adding new state to o/p");
+                log.info("Adding new state to o/p");
                 require.using("I won't accept SecurityBuy with a quantity over 100.", newSellState.getQuantity() <= 100);
                 require.using("I won't accept SecurityBuy with a quantity over 100.", newSellState.getQuantity() <= 100);
                 return null;

@@ -179,13 +179,13 @@ public class RestApi {
                 }
             }
 
-            logger.info("etfTradeStates for checkEtfBalance size " + securityBalanceMap.size());
+            log.info("etfTradeStates for checkEtfBalance size " + securityBalanceMap.size());
             final ByteArrayOutputStream out = new ByteArrayOutputStream();
             final ObjectMapper mapper = new ObjectMapper();
             mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
             mapper.writeValue(out, securityBalanceMap);
             String json = new String(out.toByteArray());
-            logger.info("SecurityTradeStates  json " + json);
+            log.info("SecurityTradeStates  json " + json);
             return Response.status(CREATED).entity(json).build();
         } catch (Exception e) {
             return Response.status(BAD_REQUEST).entity(e.getMessage()).build();
@@ -213,14 +213,14 @@ public class RestApi {
 
 
         AbstractCashFlow.Result result = flowHandle.getReturnValue().get();
-        logger.info("Received resp from flow " + result.getRecipient());
+        log.info("Received resp from flow " + result.getRecipient());
         return Response.status(CREATED).entity("SUCCESS").build();
     }
 
     @GET
     @Path("self-issue-security")
     public Response selfIssueEtfStock(@QueryParam(value = "quantity") int quantity, @QueryParam(value = "securityName") String securityName) throws ExecutionException, InterruptedException {
-        logger.info("Inputs for self issue security  " + securityName + "   quantity " + quantity);
+        log.info("Inputs for self issue security  " + securityName + "   quantity " + quantity);
         final List<Party> notaries = rpcOps.notaryIdentities();
         if (notaries.isEmpty()) {
             throw new IllegalStateException("Could not find a notary.");
@@ -228,7 +228,7 @@ public class RestApi {
         FlowHandle<SignedTransaction> flowHandle = rpcOps.startFlowDynamic(SecurityIssueFlow.class, new Long(quantity), securityName);
 
         SignedTransaction result = flowHandle.getReturnValue().get();
-        logger.info("Received resp from flow " + result);
+        log.info("Received resp from flow " + result);
 
         return Response.status(CREATED).entity("SUCCESS").build();
     }
@@ -268,7 +268,7 @@ public class RestApi {
     @GET
     @Path("self-issue-cp")
     public Response selfIssueCP(@QueryParam(value = "quantity") int quantity, @QueryParam(value = "currency") String currency) throws ExecutionException, InterruptedException {
-        logger.info("Inputs for self issue currency  " + currency + "   quantity " + quantity);
+        log.info("Inputs for self issue currency  " + currency + "   quantity " + quantity);
         final List<Party> notaries = rpcOps.notaryIdentities();
         if (notaries.isEmpty()) {
             throw new IllegalStateException("Could not find a notary.");
@@ -278,7 +278,7 @@ public class RestApi {
         FlowHandle<SignedTransaction> flowHandle = rpcOps.startFlowDynamic(CommercialPaperIssueFlow.class, faceValue, Instant.now());
 
         SignedTransaction result = flowHandle.getReturnValue().get();
-        logger.info("Received resp from flow " + result);
+        log.info("Received resp from flow " + result);
 
         return Response.status(CREATED).entity("SUCCESS").build();
     }
@@ -290,7 +290,7 @@ public class RestApi {
         Party receiverParty = getPartyWithName(new CordaX500Name(receiverPartyName, "London", "GB"));
         FlowHandle<SignedTransaction> flowHandle = rpcOps.startFlowDynamic(CommercialPaperMoveFlow.class, receiverParty);
         SignedTransaction result = flowHandle.getReturnValue().get();
-        logger.info("Received resp from flow " + result);
+        log.info("Received resp from flow " + result);
         return Response.status(CREATED).entity("SUCCESS").build();
     }
 
@@ -304,13 +304,13 @@ public class RestApi {
                 CommercialPaper.State etfTradeState = stateAndRef.getState().getData();
                 cpList.add(etfTradeState);
             }
-            logger.info("cp size " + cpList.size());
+            log.info("cp size " + cpList.size());
             final ByteArrayOutputStream out = new ByteArrayOutputStream();
             final ObjectMapper mapper = new ObjectMapper();
             mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
             mapper.writeValue(out, cpList);
             String json = new String(out.toByteArray());
-            logger.info("cp size json " + json);
+            log.info("cp size json " + json);
             return Response.status(CREATED).entity(json).build();
         } catch (Exception e) {
             return Response.status(BAD_REQUEST).entity(e.getMessage()).build();

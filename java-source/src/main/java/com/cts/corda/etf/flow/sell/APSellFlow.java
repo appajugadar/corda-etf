@@ -13,8 +13,6 @@ import net.corda.core.identity.Party;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.ProgressTracker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.stream.Collectors;
 
@@ -26,8 +24,6 @@ import static com.cts.corda.etf.util.Constants.SELL_STARTED;
 @StartableByRPC
 @Slf4j
 public class APSellFlow extends FlowLogic<SignedTransaction> {
-
-    static private final Logger logger = LoggerFactory.getLogger(APSellFlow.class);
 
     private final int quantity;
     private final Party depositoryParty;
@@ -101,9 +97,9 @@ public class APSellFlow extends FlowLogic<SignedTransaction> {
         progressTracker.setCurrentStep(SIGNING_TRANSACTION);
         // Sign the transaction.
         final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
-        logger.info("AP Sell flow initiate depo flow ");
+        log.info("AP Sell flow initiate depo flow ");
         FlowSession depositorySession = initiateFlow(depositoryParty);
-        logger.info("AP Sell flow initiated depo flow ");
+        log.info("AP Sell flow initiated depo flow ");
 
         // Stage 4.
         progressTracker.setCurrentStep(GATHERING_SIGS);

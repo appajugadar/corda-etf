@@ -13,8 +13,6 @@ import net.corda.core.identity.Party;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.ProgressTracker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.stream.Collectors;
 
@@ -115,7 +113,6 @@ public class APBuyFlow extends FlowLogic<SignedTransaction> {
     @InitiatingFlow
     public class APBuySubFlow extends FlowLogic<String> {
 
-        private final Logger logger = LoggerFactory.getLogger(APBuySubFlow.class);
         private final FlowSession flowSession;
         private final SecurityBuyState securityBuyState;
 
@@ -128,7 +125,7 @@ public class APBuyFlow extends FlowLogic<SignedTransaction> {
         @Suspendable
         @Override
         public String call() throws FlowException {
-            logger.info("APBuySubFlow inside call method ");
+            log.info("APBuySubFlow inside call method ");
             final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
             Party buyer = getServiceHub().getMyInfo().getLegalIdentities().get(0);
 

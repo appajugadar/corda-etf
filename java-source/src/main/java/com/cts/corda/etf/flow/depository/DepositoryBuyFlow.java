@@ -19,8 +19,6 @@ import net.corda.core.node.services.Vault;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.ProgressTracker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -36,7 +34,6 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
 @Slf4j
 public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
 
-    static private final Logger logger = LoggerFactory.getLogger(DepositoryBuyFlow.class);
     private final FlowSession flowSession;
 
     public DepositoryBuyFlow(FlowSession flowSession) {
@@ -48,7 +45,7 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
     @Override
     public SignedTransaction call() throws FlowException {
 
-        logger.info("DepositoryBuyFlow inside call method ");
+        log.info("DepositoryBuyFlow inside call method ");
 
         //check vault for sell states and if found then return
         Vault.Page<SecuritySellState> results = getServiceHub().getVaultService().queryBy(SecuritySellState.class);
@@ -59,7 +56,7 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
             securitySellState = securitySellStateList.get(0);
         }
 
-        logger.info("DepositoryBuyFlow flowSession " + flowSession.getCounterpartyFlowInfo());
+        log.info("DepositoryBuyFlow flowSession " + flowSession.getCounterpartyFlowInfo());
 
         if (securitySellState != null) {
             //update sell state
@@ -75,7 +72,7 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
             txBuilder.verify(getServiceHub());
             // Sign the transaction.
             final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
-            logger.info("securitySellState.getSeller() " + securitySellState.getSeller());
+            log.info("securitySellState.getSeller() " + securitySellState.getSeller());
             FlowSession sellerSession = initiateFlow(securitySellState.getSeller());
             final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(sellerSession), CollectSignaturesFlow.Companion.tracker()));
 
@@ -123,7 +120,7 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
                     newBuyState.setStatus(BUY_MATCHED);
                 }
 
-                logger.info("Adding new state to o/p");
+                log.info("Adding new state to o/p");
                 stx.getTx().getOutputStates().add(newBuyState);
 
                 require.using("I won't accept SecurityBuy with a quantity over 100.", newBuyState.getQuantity() <= 100);

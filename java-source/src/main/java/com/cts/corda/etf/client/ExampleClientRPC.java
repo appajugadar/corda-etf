@@ -25,7 +25,7 @@ public class ExampleClientRPC {
     private static final Logger logger = LoggerFactory.getLogger(ExampleClientRPC.class);
 
     private static void logState(StateAndRef<SecurityBuyState> state) {
-        logger.info("{}", state.getState().getData());
+        log.info("{}", state.getState().getData());
     }
 
     public static void main(String[] args) throws ActiveMQException, InterruptedException, ExecutionException {

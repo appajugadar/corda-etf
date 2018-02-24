@@ -18,8 +18,6 @@ import net.corda.core.node.services.Vault;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.ProgressTracker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,7 +31,6 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
 @Slf4j
 public class DepositorySellFlow extends FlowLogic<SignedTransaction> {
 
-    static private final Logger logger = LoggerFactory.getLogger(DepositorySellFlow.class);
     private final FlowSession flowSession;
 
     public DepositorySellFlow(FlowSession flowSession) {
@@ -45,7 +42,7 @@ public class DepositorySellFlow extends FlowLogic<SignedTransaction> {
     @Override
     public SignedTransaction call() throws FlowException {
 
-        logger.info("DepositoryBuyFlow inside call method ");
+        log.info("DepositoryBuyFlow inside call method ");
 
         //check vault for sell states and if found then return
         Vault.Page<SecurityBuyState> results = getServiceHub().getVaultService().queryBy(SecurityBuyState.class);
@@ -57,7 +54,7 @@ public class DepositorySellFlow extends FlowLogic<SignedTransaction> {
             securityBuyState = securityBuyStateList.get(0);
         }
 
-        logger.info("DepositoryBuyFlow flowSession " + flowSession.getCounterpartyFlowInfo());
+        log.info("DepositoryBuyFlow flowSession " + flowSession.getCounterpartyFlowInfo());
         if (securityBuyState != null) {
             //update sell state
             securityBuyState.setSeller(flowSession.getCounterparty());
@@ -72,14 +69,14 @@ public class DepositorySellFlow extends FlowLogic<SignedTransaction> {
             txBuilder.verify(getServiceHub());
             // Sign the transaction.
             final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
-            logger.info("securityBuyState.getBuyer() " + securityBuyState.getBuyer());
+            log.info("securityBuyState.getBuyer() " + securityBuyState.getBuyer());
             FlowSession sellerSession = initiateFlow(securityBuyState.getBuyer());
             final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(sellerSession), CollectSignaturesFlow.Companion.tracker()));
             // Notarise and record the transaction in both parties' vaults.
             subFlow(new FinalityFlow(fullySignedTx));
 
         } else {
-            logger.info("No buy request found ");
+            log.info("No buy request found ");
         }
 
 

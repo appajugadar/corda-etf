@@ -6,8 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.corda.core.flows.*;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.utilities.ProgressTracker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 
@@ -16,7 +14,6 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
 @Slf4j
 public class DepositoryBuyAcceptorFlow extends FlowLogic<SignedTransaction> {
 
-    static private final Logger logger = LoggerFactory.getLogger(DepositorySellFlow.class);
     private final FlowSession flowSession;
 
     public DepositoryBuyAcceptorFlow(FlowSession flowSession) {
@@ -27,7 +24,7 @@ public class DepositoryBuyAcceptorFlow extends FlowLogic<SignedTransaction> {
     @Suspendable
     @Override
     public SignedTransaction call() throws FlowException {
-        logger.info("DepositoryBuyAcceptorFlow inside call method ");
+        log.info("DepositoryBuyAcceptorFlow inside call method ");
         SignedTransaction stx = subFlow(new SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker()));
         return stx;
     }

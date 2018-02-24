@@ -16,8 +16,6 @@ import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.ProgressTracker;
 import net.corda.finance.flows.TwoPartyTradeFlow;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +29,6 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
 @Slf4j
 public class APSellCompletionFlow extends FlowLogic<SignedTransaction> {
 
-    static private final Logger logger = LoggerFactory.getLogger(APSellCompletionFlow.class);
     private final FlowSession flowSession;
     private final ProgressTracker.Step SELF_ISSUING = new ProgressTracker.Step("Got session ID back, issuing and timestamping some commercial paper");
     private final ProgressTracker.Step TRADING = new ProgressTracker.Step("Starting the trade flow.") {
@@ -49,7 +46,7 @@ public class APSellCompletionFlow extends FlowLogic<SignedTransaction> {
     @Suspendable
     @Override
     public SignedTransaction call() throws FlowException {
-        logger.info("APSellCompletionFlow inside call method ");
+        log.info("APSellCompletionFlow inside call method ");
 
         SignedTransaction stx = subFlow(new APSellCompletionFlow.SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker()));
         ContractState output = stx.getTx().getOutputs().get(0).getData();
@@ -65,9 +62,9 @@ public class APSellCompletionFlow extends FlowLogic<SignedTransaction> {
 
         final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
 
-        logger.info("newSellState.getBuyer() " + (newSellState.getBuyer()));
+        log.info("newSellState.getBuyer() " + (newSellState.getBuyer()));
         FlowSession buyerSession = initiateFlow(newSellState.getBuyer());
-        logger.info("buyerSession is null " + (buyerSession == null));
+        log.info("buyerSession is null " + (buyerSession == null));
 
         final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(buyerSession), CollectSignaturesFlow.Companion.tracker()));
         subFlow(new FinalityFlow(fullySignedTx));
@@ -86,7 +83,7 @@ public class APSellCompletionFlow extends FlowLogic<SignedTransaction> {
                 ContractState output = stx.getTx().getOutputs().get(0).getData();
                 require.using("This must be an SecuritySell transaction.", output instanceof SecuritySellState);
                 SecuritySellState newSellState = (SecuritySellState) output;
-                logger.info("Adding new state to o/p");
+                log.info("Adding new state to o/p");
                 require.using("I won't accept SecurityBuy with a quantity over 100.", newSellState.getQuantity() <= 100);
                 return null;
             });
