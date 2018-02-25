@@ -1,44 +1,17 @@
 package com.cts.corda.etf.flow.depository;
 
-import co.paralleluniverse.fibers.Suspendable;
+import com.cts.corda.etf.flow.AbstractTransactionAcceptorFlow;
 import com.cts.corda.etf.flow.buy.ApBuySettleFlow;
 import lombok.extern.slf4j.Slf4j;
-import net.corda.core.flows.*;
-import net.corda.core.transactions.SignedTransaction;
-import net.corda.core.utilities.ProgressTracker;
-
-import static net.corda.core.contracts.ContractsDSL.requireThat;
+import net.corda.core.flows.FlowSession;
+import net.corda.core.flows.InitiatedBy;
+import net.corda.core.flows.InitiatingFlow;
 
 @InitiatedBy(ApBuySettleFlow.class)
 @InitiatingFlow
 @Slf4j
-public class DepositoryBuyAcceptorFlow extends FlowLogic<SignedTransaction> {
-
-    private final FlowSession flowSession;
-
+public class DepositoryBuyAcceptorFlow extends AbstractTransactionAcceptorFlow {
     public DepositoryBuyAcceptorFlow(FlowSession flowSession) {
-        this.flowSession = flowSession;
-        log.info("Inside DepositoryBuyAcceptorFlow called by " + flowSession.getCounterparty());
-    }
-
-    @Suspendable
-    @Override
-    public SignedTransaction call() throws FlowException {
-        log.info("DepositoryBuyAcceptorFlow inside call method ");
-        SignedTransaction stx = subFlow(new SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker()));
-        return stx;
-    }
-
-    class SignTxFlow extends SignTransactionFlow {
-        private SignTxFlow(FlowSession otherPartyFlow, ProgressTracker progressTracker) {
-            super(otherPartyFlow, progressTracker);
-        }
-
-        @Override
-        protected void checkTransaction(SignedTransaction stx) {
-            requireThat(require -> {
-                return null;
-            });
-        }
+        super(flowSession);
     }
 }
