@@ -24,7 +24,7 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
  */
 @Slf4j
 public class SettlementContract implements Contract {
-    public static final String Settlement_SECURITY_CONTRACT_ID = "com.cts.corda.etf.contract.SettlementContract";
+    public static final String SECURITY_SETTLEMENT_CONTRACT_ID = "com.cts.corda.etf.contract.SettlementContract";
 
     /**
      * The verify() function of all the states' contracts must not throw an exception for a transaction to be
@@ -32,7 +32,7 @@ public class SettlementContract implements Contract {
      */
     @Override
     public void verify(LedgerTransaction tx) {
-        final CommandWithParties<Commands.Create> command = requireSingleCommand(tx.getCommands(), Commands.Create.class);
+        final CommandWithParties<Commands.Settle> command = requireSingleCommand(tx.getCommands(), Commands.Settle.class);
         requireThat(require -> {
             // Generic constraints around the IOU transaction.
             require.using("No inputs should be consumed when issuing an SellRequest.", tx.getInputs().isEmpty());
@@ -52,7 +52,7 @@ public class SettlementContract implements Contract {
      * This contract only implements one command, Create.
      */
     public interface Commands extends CommandData {
-        class Create implements Commands {
+        class Settle implements Commands {
         }
     }
 }

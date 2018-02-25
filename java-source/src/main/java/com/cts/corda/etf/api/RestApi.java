@@ -5,7 +5,7 @@ import com.cts.corda.etf.flow.commercialpaper.CommercialPaperIssueFlow;
 import com.cts.corda.etf.flow.commercialpaper.CommercialPaperMoveFlow;
 import com.cts.corda.etf.flow.buy.APBuyFlow;
 import com.cts.corda.etf.flow.sell.APSellFlow;
-import com.cts.corda.etf.flows.SecurityIssueFlow;
+import com.cts.corda.etf.flow.issue.SecurityIssueFlow;
 import com.cts.corda.etf.state.CommercialPaper;
 import com.cts.corda.etf.state.SecurityBuyState;
 import com.cts.corda.etf.state.SecuritySellState;

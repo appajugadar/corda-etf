@@ -82,8 +82,7 @@ public class APSellFlow extends FlowLogic<SignedTransaction> {
         Party seller = getServiceHub().getMyInfo().getLegalIdentities().get(0);
         SecuritySellState securitySellState = new SecuritySellState(quantity, securityName, SELL_STARTED, seller, depositoryParty);
 
-        final Command<SellContract.Commands.Create> txCommand = new Command<>(new SellContract.Commands.Create(),
-                securitySellState.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
+        final Command<SellContract.Commands.Create> txCommand = new Command<>(new SellContract.Commands.Create(), securitySellState.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
 
         final TransactionBuilder txBuilder = new TransactionBuilder(notary).withItems(new StateAndContract(securitySellState, SELL_SECURITY_CONTRACT_ID), txCommand);
 
@@ -92,29 +91,21 @@ public class APSellFlow extends FlowLogic<SignedTransaction> {
 
         // Verify that the transaction is valid.
         txBuilder.verify(getServiceHub());
-
         // Stage 3.
         progressTracker.setCurrentStep(SIGNING_TRANSACTION);
         // Sign the transaction.
         final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
-        log.info("AP Sell flow initiate depo flow ");
         FlowSession depositorySession = initiateFlow(depositoryParty);
-        log.info("AP Sell flow initiated depo flow ");
-
         // Stage 4.
         progressTracker.setCurrentStep(GATHERING_SIGS);
 
         // Send the state to the counterparty, and receive it back with their signature.
-        final SignedTransaction fullySignedTx = subFlow(
-                new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(depositorySession), CollectSignaturesFlow.Companion.tracker()));
+        final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(depositorySession), CollectSignaturesFlow.Companion.tracker()));
 
         // Stage 5.
         progressTracker.setCurrentStep(FINALISING_TRANSACTION);
 
-
         // Notarise and record the transaction in both parties' vaults.
-        subFlow(new FinalityFlow(fullySignedTx));
-
         return subFlow(new FinalityFlow(fullySignedTx));
     }
 }

@@ -1,4 +1,4 @@
-package com.cts.corda.etf.flows;
+package com.cts.corda.etf.flow.issue;
 
 import co.paralleluniverse.fibers.Suspendable;
 import com.cts.corda.etf.contract.SecurityStock;

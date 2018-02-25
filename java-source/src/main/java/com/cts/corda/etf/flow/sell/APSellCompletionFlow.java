@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.cts.corda.etf.contract.SettlementContract.Settlement_SECURITY_CONTRACT_ID;
+import static com.cts.corda.etf.contract.SettlementContract.SECURITY_SETTLEMENT_CONTRACT_ID;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 @InitiatingFlow
@@ -57,15 +57,10 @@ public class APSellCompletionFlow extends FlowLogic<SignedTransaction> {
         ls.add(newSellState.getBuyer());
         ls.add(newSellState.getSeller());
 
-        final Command<SettlementContract.Commands.Create> txCommand = new Command<>(new SettlementContract.Commands.Create(), ls.stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
-        final TransactionBuilder txBuilder = new TransactionBuilder(notary).withItems(new StateAndContract(newSellState, Settlement_SECURITY_CONTRACT_ID), txCommand);
-
+        final Command<SettlementContract.Commands.Settle> txCommand = new Command<>(new SettlementContract.Commands.Settle(), ls.stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
+        final TransactionBuilder txBuilder = new TransactionBuilder(notary).withItems(new StateAndContract(newSellState, SECURITY_SETTLEMENT_CONTRACT_ID), txCommand);
         final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
-
-        log.info("newSellState.getBuyer() " + (newSellState.getBuyer()));
         FlowSession buyerSession = initiateFlow(newSellState.getBuyer());
-        log.info("buyerSession is null " + (buyerSession == null));
-
         final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(buyerSession), CollectSignaturesFlow.Companion.tracker()));
         subFlow(new FinalityFlow(fullySignedTx));
         return fullySignedTx;
