@@ -12,10 +12,8 @@ import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.utilities.ProgressTracker;
 import net.corda.finance.flows.CashPaymentFlow;
 
-import java.util.ArrayList;
 import java.util.Currency;
 import java.util.HashSet;
-import java.util.List;
 
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 

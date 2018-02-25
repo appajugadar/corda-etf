@@ -4,24 +4,13 @@ import co.paralleluniverse.fibers.Suspendable;
 import com.cts.corda.etf.state.CommercialPaper;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
-import net.corda.core.contracts.Command;
-import net.corda.core.contracts.StateAndContract;
 import net.corda.core.contracts.StateAndRef;
 import net.corda.core.flows.*;
-import net.corda.core.identity.AbstractParty;
 import net.corda.core.identity.Party;
 import net.corda.core.node.services.Vault;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.ProgressTracker;
-import net.corda.finance.contracts.asset.Cash;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static com.cts.corda.etf.state.CommercialPaper.JCP_PROGRAM_ID;
 
 
 @InitiatingFlow
@@ -67,7 +56,7 @@ public class CommercialPaperMoveFlow extends FlowLogic<SignedTransaction> {
         // Generate an unsigned transaction.
         Vault.Page<CommercialPaper.State> results = getServiceHub().getVaultService().queryBy(CommercialPaper.State.class);
         StateAndRef<CommercialPaper.State> commercialPaperStateRef = null;
-        if(results!=null && results.getStates().size()>0){
+        if (results != null && results.getStates().size() > 0) {
             commercialPaperStateRef = results.getStates().get(0);
         }
 

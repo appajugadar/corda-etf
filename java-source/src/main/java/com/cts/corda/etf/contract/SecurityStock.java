@@ -34,6 +34,15 @@ public class SecurityStock implements Contract {
         return item;
     }
 
+    public static void generateMove(TransactionBuilder tx, StateAndRef<State> security, AbstractParty newOwner) {
+        tx.addInputState(security);
+
+        tx.addOutputState(new TransactionState<>(new State(security.getState().getData().getIssuance(), newOwner, security.getState().getData().getSecurityName(), security.getState().getData().getQuantity()),
+                SECURITY_STOCK_CONTRACT, security.getState().getNotary(), security.getState().getEncumbrance()));
+
+        tx.addCommand(new Command<>(new Commands.Move(), security.getState().getData().getOwner().getOwningKey()));
+    }
+
     @NotNull
     private List<CommandWithParties<Commands>> extractCommands(@NotNull LedgerTransaction tx) {
         return tx.getCommands()
@@ -101,15 +110,6 @@ public class SecurityStock implements Contract {
 
     public TransactionBuilder generateIssue(@NotNull PartyAndReference issuance, String securityName, Long quantity, @NotNull Party notary) {
         return generateIssue(issuance, securityName, quantity, notary, null);
-    }
-
-    public static void generateMove(TransactionBuilder tx, StateAndRef<State> security, AbstractParty newOwner) {
-        tx.addInputState(security);
-
-        tx.addOutputState(new TransactionState<>(new State(security.getState().getData().getIssuance(), newOwner, security.getState().getData().getSecurityName(), security.getState().getData().getQuantity()),
-                SECURITY_STOCK_CONTRACT, security.getState().getNotary(), security.getState().getEncumbrance()));
-
-        tx.addCommand(new Command<>(new Commands.Move(), security.getState().getData().getOwner().getOwningKey()));
     }
 
 

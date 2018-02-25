@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.corda.core.contracts.Command;
 import net.corda.core.contracts.ContractState;
 import net.corda.core.contracts.StateAndContract;
-import net.corda.core.contracts.StateAndRef;
 import net.corda.core.flows.*;
 import net.corda.core.identity.AbstractParty;
 import net.corda.core.identity.Party;
@@ -24,7 +23,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.cts.corda.etf.contract.SellContract.SELL_SECURITY_CONTRACT_ID;
-import static com.cts.corda.etf.util.Constants.BUY_MATCHED;
 import static com.cts.corda.etf.util.Constants.SELL_MATCHED;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 

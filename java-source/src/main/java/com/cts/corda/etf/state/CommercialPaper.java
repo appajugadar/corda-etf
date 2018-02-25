@@ -44,6 +44,28 @@ public class CommercialPaper implements Contract {
         return item;
     }
 
+    @Suspendable
+    public static void generateRedeem(final TransactionBuilder tx,
+                                      final StateAndRef<State> paper,
+                                      final ServiceHub services,
+                                      final PartyAndCertificate ourIdentity) throws InsufficientBalanceException {
+        Amount<Currency> amount = Structures.withoutIssuer(paper.getState().getData().getFaceValue());
+        Cash.generateSpend(services, tx,
+                amount, paper.getState().getData().getOwner(), Collections.emptySet());
+        tx.addInputState(paper);
+        tx.addCommand(new Command<>(new Commands.Redeem(), paper.getState().getData().getOwner().getOwningKey()));
+    }
+
+    public static void generateMove(TransactionBuilder tx, StateAndRef<State> paper, AbstractParty newOwner) {
+        log.info("Inside generate move method newOwner " + newOwner);
+        tx.addInputState(paper);
+        tx.addOutputState(new TransactionState<>(new State(paper.getState().getData().getIssuance(), newOwner, paper.getState().getData().getFaceValue(),
+                paper.getState().getData().getMaturityDate()),
+                JCP_PROGRAM_ID, paper.getState().getNotary(), paper.getState().getEncumbrance()));
+        tx.addCommand(new Command<>(new Commands.Move(), paper.getState().getData().getOwner().getOwningKey()));
+        log.info("complete generatemove " + tx);
+    }
+
     @NotNull
     private List<CommandWithParties<Commands>> extractCommands(@NotNull LedgerTransaction tx) {
         return tx.getCommands()
@@ -132,28 +154,6 @@ public class CommercialPaper implements Contract {
 
     public TransactionBuilder generateIssue(@NotNull PartyAndReference issuance, @NotNull Amount<Issued<Currency>> faceValue, @Nullable Instant maturityDate, @NotNull Party notary) {
         return generateIssue(issuance, faceValue, maturityDate, notary, null);
-    }
-
-    @Suspendable
-    public static void generateRedeem(final TransactionBuilder tx,
-                               final StateAndRef<State> paper,
-                               final ServiceHub services,
-                               final PartyAndCertificate ourIdentity) throws InsufficientBalanceException {
-        Amount<Currency> amount = Structures.withoutIssuer(paper.getState().getData().getFaceValue());
-        Cash.generateSpend(services, tx,
-                amount, paper.getState().getData().getOwner(), Collections.emptySet());
-        tx.addInputState(paper);
-        tx.addCommand(new Command<>(new Commands.Redeem(), paper.getState().getData().getOwner().getOwningKey()));
-    }
-
-    public static void generateMove(TransactionBuilder tx, StateAndRef<State> paper, AbstractParty newOwner) {
-        log.info("Inside generate move method newOwner "+newOwner);
-        tx.addInputState(paper);
-        tx.addOutputState(new TransactionState<>(new State(paper.getState().getData().getIssuance(), newOwner, paper.getState().getData().getFaceValue(),
-                paper.getState().getData().getMaturityDate()),
-                JCP_PROGRAM_ID, paper.getState().getNotary(), paper.getState().getEncumbrance()));
-        tx.addCommand(new Command<>(new Commands.Move(), paper.getState().getData().getOwner().getOwningKey()));
-        log.info("complete generatemove "+tx);
     }
 
     public interface Commands extends CommandData {
