@@ -44,9 +44,7 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
     @Suspendable
     @Override
     public SignedTransaction call() throws FlowException {
-
         log.info("DepositoryBuyFlow inside call method ");
-
         //check vault for sell states and if found then return
         Vault.Page<SecuritySellState> results = getServiceHub().getVaultService().queryBy(SecuritySellState.class);
         List<SecuritySellState> securitySellStateList = RequestHelper.getUnmatchedSecuritySellState(results.getStates());
@@ -60,7 +58,6 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
 
         if (securitySellState != null) {
             //update sell state
-
             securitySellState.setBuyer(flowSession.getCounterparty());
             securitySellState.setStatus(SELL_MATCHED);
             // Obtain a reference to the notary we want to use.
@@ -72,16 +69,8 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
             txBuilder.verify(getServiceHub());
             // Sign the transaction.
             final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
-            log.info("securitySellState.getSeller() " + securitySellState.getSeller());
             FlowSession sellerSession = initiateFlow(securitySellState.getSeller());
             final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(sellerSession), CollectSignaturesFlow.Companion.tracker()));
-
-            SecurityBuyState output = new SecurityBuyState();
-            output.setSeller(securitySellState.getSeller());
-            output.setStatus(BUY_MATCHED);
-            output.setLinearId(securitySellState.getLinearId());
-            //  flowSession.send(output);
-
             // Notarise and record the transaction in both parties' vaults.
             subFlow(new FinalityFlow(fullySignedTx));
         } else {
@@ -103,27 +92,6 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
             requireThat(require -> {
                 ContractState output = stx.getTx().getOutputs().get(0).getData();
                 require.using("This must be an SecurityBuy transaction.", output instanceof SecurityBuyState);
-
-                //
-                Vault.Page<SecuritySellState> results = getServiceHub().getVaultService().queryBy(SecuritySellState.class);
-                List<StateAndRef<SecuritySellState>> ref = results.getStates();
-                SecuritySellState securitySellState = null;
-
-                for (StateAndRef<SecuritySellState> stateref : ref) {
-                    securitySellState = stateref.getState().getData();
-                }
-                //
-                SecurityBuyState newBuyState = (SecurityBuyState) output;
-
-                if (securitySellState != null) {
-                    newBuyState.setSeller(securitySellState.getSeller());
-                    newBuyState.setStatus(BUY_MATCHED);
-                }
-
-                log.info("Adding new state to o/p");
-                stx.getTx().getOutputStates().add(newBuyState);
-
-                require.using("I won't accept SecurityBuy with a quantity over 100.", newBuyState.getQuantity() <= 100);
                 return null;
             });
         }
