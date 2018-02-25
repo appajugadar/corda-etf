@@ -64,6 +64,63 @@ public class RestApi {
     }
 
     @GET
+    @Path("SellRequests")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<StateAndRef<SecuritySellState>> getSellRequests() {
+        List<StateAndRef<SecuritySellState>> ref = rpcOps.vaultQuery(SecuritySellState.class).getStates();
+        return ref;
+    }
+
+    @GET
+    @Path("UnMatchedSellRequests")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<SecuritySellState> getUnMatchedSellRequests() {
+        List<StateAndRef<SecuritySellState>> ref = rpcOps.vaultQuery(SecuritySellState.class).getStates();
+        return RequestHelper.getUnmatchedSecuritySellState(ref);
+    }
+
+    @GET
+    @Path("UnMatchedBuyRequests")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<SecurityBuyState> getUnMatchedBuyRequests() {
+        List<StateAndRef<SecurityBuyState>> ref = rpcOps.vaultQuery(SecurityBuyState.class).getStates();
+        return RequestHelper.getUnmatchedSecurityBuyState(ref);
+    }
+
+    @GET
+    @Path("security-balance")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<SecurityBalance> checkSecurityStockBalance() {
+        List<StateAndRef<SecurityStock.State>> etfTradeStatesQueryResp = rpcOps.vaultQuery(SecurityStock.State.class).getStates();
+        Map<String, SecurityBalance> securityBalanceMap = new HashMap<>();
+        for (StateAndRef<SecurityStock.State> stateAndRef : etfTradeStatesQueryResp) {
+            SecurityStock.State etfTradeState = stateAndRef.getState().getData();
+            if (securityBalanceMap.containsKey(etfTradeState.getSecurityName())) {
+                SecurityBalance balance = securityBalanceMap.get(etfTradeState.getSecurityName());
+                balance.setQuantity(balance.getQuantity() + etfTradeState.getQuantity());
+            }else{
+                securityBalanceMap.put(etfTradeState.getSecurityName(), new SecurityBalance(etfTradeState.getSecurityName(), etfTradeState.getQuantity()));
+            }
+        }
+        List<SecurityBalance> ls = new ArrayList<>();
+        ls.addAll(securityBalanceMap.values());
+        return ls;
+
+    }
+
+    @GET
+    @Path("cash-balance")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<CashBalance> cashBalances() {
+        Map<Currency, Amount<Currency>> balanceMap =  net.corda.finance.contracts.GetBalances.getCashBalances(rpcOps);
+        List<CashBalance> balances = new ArrayList<>();
+        for (Amount<Currency> cash:balanceMap.values()) {
+            balances.add(new CashBalance(cash.getToken().getCurrencyCode(), cash.getQuantity()));
+        }
+        return balances;
+    }
+
+    @GET
     @Path("buy-security")
     public Response buySecurity(@QueryParam("quantity") int quantity, @QueryParam("securityName") String securityName) {
         if (quantity <= 0) {
@@ -90,31 +147,6 @@ public class RestApi {
             log.error(ex.getMessage(), ex);
             return Response.status(BAD_REQUEST).entity(msg).build();
         }
-    }
-
-
-    @GET
-    @Path("SellRequests")
-    @Produces(MediaType.APPLICATION_JSON)
-    public List<StateAndRef<SecuritySellState>> getSellRequests() {
-        List<StateAndRef<SecuritySellState>> ref = rpcOps.vaultQuery(SecuritySellState.class).getStates();
-        return ref;
-    }
-
-    @GET
-    @Path("UnMatchedSellRequests")
-    @Produces(MediaType.APPLICATION_JSON)
-    public List<SecuritySellState> getUnMatchedSellRequests() {
-        List<StateAndRef<SecuritySellState>> ref = rpcOps.vaultQuery(SecuritySellState.class).getStates();
-        return RequestHelper.getUnmatchedSecuritySellState(ref);
-    }
-
-    @GET
-    @Path("UnMatchedBuyRequests")
-    @Produces(MediaType.APPLICATION_JSON)
-    public List<SecurityBuyState> getUnMatchedBuyRequests() {
-        List<StateAndRef<SecurityBuyState>> ref = rpcOps.vaultQuery(SecurityBuyState.class).getStates();
-        return RequestHelper.getUnmatchedSecurityBuyState(ref);
     }
 
     @GET
@@ -144,56 +176,6 @@ public class RestApi {
             log.error(ex.getMessage(), ex);
             return Response.status(BAD_REQUEST).entity(msg).build();
         }
-    }
-
-
-    @GET
-    @Path("security-balance")
-    public Response checkSecurityStockBalance() {
-        final List<Party> notaries = rpcOps.notaryIdentities();
-        if (notaries.isEmpty()) {
-            throw new IllegalStateException("Could not find a notary.");
-        }
-
-        try {
-            List<StateAndRef<SecurityStock.State>> etfTradeStatesQueryResp = rpcOps.vaultQuery(SecurityStock.State.class).getStates();
-            Map<String, Long> securityBalanceMap = new HashMap<>();
-
-            for (StateAndRef<SecurityStock.State> stateAndRef : etfTradeStatesQueryResp) {
-                SecurityStock.State etfTradeState = stateAndRef.getState().getData();
-                Long quantity = etfTradeState.getQuantity();
-                if (securityBalanceMap.containsKey(etfTradeState.getSecurityName())) {
-                    quantity = quantity + securityBalanceMap.get(etfTradeState.getSecurityName());
-                }
-                securityBalanceMap.put(etfTradeState.getSecurityName(), quantity);
-            }
-
-
-            for (String key : securityBalanceMap.keySet()) {
-                Long val = securityBalanceMap.get(key);
-                if (val == 0) {
-                    securityBalanceMap.remove(key);
-                }
-            }
-
-            log.info("etfTradeStates for checkEtfBalance size " + securityBalanceMap.size());
-            final ByteArrayOutputStream out = new ByteArrayOutputStream();
-            final ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-            mapper.writeValue(out, securityBalanceMap);
-            String json = new String(out.toByteArray());
-            log.info("SecurityTradeStates  json " + json);
-            return Response.status(CREATED).entity(json).build();
-        } catch (Exception e) {
-            return Response.status(BAD_REQUEST).entity(e.getMessage()).build();
-        }
-    }
-
-    @GET
-    @Path("cash-balance")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Map<Currency, Amount<Currency>> cashBalances() {
-        return net.corda.finance.contracts.GetBalances.getCashBalances(rpcOps);
     }
 
     @GET
@@ -241,8 +223,12 @@ public class RestApi {
     @GET
     @Path("me")
     @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, CordaX500Name> whoami() {
-        return ImmutableMap.of("me", myLegalName);
+    public Map<String, String> whoami() {
+        log.info("myLegalName.getCommonName() "+myLegalName.getCommonName());
+        log.info("myLegalName.getX500Principal() "+myLegalName.getX500Principal());
+        log.info("myLegalName.getX500Principal().getName() "+myLegalName.getX500Principal().getName());
+        log.info("myLegalName.getOrganisation() "+myLegalName.getOrganisation());
+        return ImmutableMap.of("me", myLegalName.getX500Principal().getName());
     }
 
     /**
