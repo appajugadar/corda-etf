@@ -1,3 +1,14 @@
+
+GUI URL  
+
+AP1  :   http://localhost:10007/web/example/index.html
+
+AP1   :  http://localhost:10010/web/example/index.html
+
+Depository  : http://localhost:10013/web/example/index.html
+
+Regulator  :  http://localhost:10016/web/example/index.html
+
 Rest API URLS
 
 Buyer
@@ -53,19 +64,8 @@ http://localhost:10007/api/rest/cp-balance
 
 http://localhost:10007/api/rest/move-cp?receiverPartyName=AP2
 
-
-GUI URL  
-
-http://localhost:10007/web/example/index.html
-
-http://localhost:10010/web/example/index.html
-
-http://localhost:10013/web/example/index.html
-
-http://localhost:10016/web/example/index.html
-
-
 http://localhost:10010/api/rest/cp-balance
+
 
 JVM Param for testcase
 
