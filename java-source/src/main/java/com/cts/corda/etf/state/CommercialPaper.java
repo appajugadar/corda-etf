@@ -135,7 +135,7 @@ public class CommercialPaper implements Contract {
     }
 
     @Suspendable
-    public void generateRedeem(final TransactionBuilder tx,
+    public static void generateRedeem(final TransactionBuilder tx,
                                final StateAndRef<State> paper,
                                final ServiceHub services,
                                final PartyAndCertificate ourIdentity) throws InsufficientBalanceException {

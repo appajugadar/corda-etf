@@ -4,6 +4,7 @@ import co.paralleluniverse.fibers.Suspendable;
 import com.cts.corda.etf.contract.SecurityStock;
 import com.cts.corda.etf.contract.SellContract;
 import com.cts.corda.etf.flow.buy.APBuyCompletionFlow;
+import com.cts.corda.etf.state.CommercialPaper;
 import com.cts.corda.etf.state.SecuritySellState;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
@@ -41,71 +42,30 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
     @Override
     public SignedTransaction call() throws FlowException {
         log.info("Inside ApSellSettleFlow call " + flowSession.getCounterparty());
-
         List<StateAndRef<SecurityStock.State>> etfTradeStatesQueryResp = getServiceHub().getVaultService().queryBy(SecurityStock.State.class).getStates();
-        SecurityStock.State securityState = null;
-        for (StateAndRef<SecurityStock.State> stateAndRef : etfTradeStatesQueryResp) {
-            securityState = stateAndRef.getState().getData();
+        StateAndRef<SecurityStock.State> stateAndRef=null;
+        for (StateAndRef<SecurityStock.State> stateAndRef1 : etfTradeStatesQueryResp) {
+            stateAndRef =stateAndRef1;
         }
-        final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
-
-        //
-        PartyAndReference issuer1 = this.getOurIdentity().ref(OpaqueBytes.of((securityState.getSecurityName() + securityState.getQuantity()).getBytes()));
-        SecurityStock.State etfTradeState1 = new SecurityStock.State(issuer1, getOurIdentity(), securityState.getSecurityName(), -securityState.getQuantity());
-        final Command<SecurityStock.Commands.Issue> txCommand1 = new Command<>(new SecurityStock.Commands.Issue(),
-                securityState.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
-        final TransactionBuilder txBuilder1 = new TransactionBuilder(notary).withItems(new StateAndContract(etfTradeState1, SECURITY_STOCK_CONTRACT), txCommand1);
-        txBuilder1.verify(getServiceHub());
-        final SignedTransaction partSignedTx1 = getServiceHub().signInitialTransaction(txBuilder1);
-        subFlow(new FinalityFlow(partSignedTx1));
-        //
-
-        PartyAndReference issuer = this.getOurIdentity().ref(OpaqueBytes.of((securityState.getSecurityName() + securityState.getQuantity()).getBytes()));
-        SecurityStock.State etfTradeState = new SecurityStock.State(issuer, flowSession.getCounterparty(), securityState.getSecurityName(), securityState.getQuantity());
-        final Command<SecurityStock.Commands.Issue> txCommand = new Command<>(new SecurityStock.Commands.Issue(),
-                securityState.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
-        final TransactionBuilder txBuilder = new TransactionBuilder(notary).withItems(new StateAndContract(etfTradeState, SECURITY_STOCK_CONTRACT), txCommand);
-        // Verify that the transaction is valid.
-        getLogger().info("Before verify ApSellSettleFlow");
-        txBuilder.verify(getServiceHub());
-        final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
-        final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(flowSession), CollectSignaturesFlow.Companion.tracker()));
-
-        log.info("Inside EtfIssue flow finalize tx11");
-        SignedTransaction fullySignedTx1 = subFlow(new FinalityFlow(fullySignedTx));
-
+        SignedTransaction fullySignedTx = subFlow(new MoveSecurityFlow(stateAndRef));
 
         //UPDATE sell request as matched
-        //check vault for sell states and if found then return
         List<StateAndRef<SecuritySellState>> ref = getServiceHub().getVaultService().queryBy(SecuritySellState.class).getStates();
         SecuritySellState securitySellState = null;
 
         for (StateAndRef<SecuritySellState> stateref : ref) {
             securitySellState = stateref.getState().getData();
-            if (securitySellState.getStatus().equals(SELL_MATCHED)) {
-
-            }
         }
 
         if (securitySellState != null) {
             //update sell state
-            securitySellState.setBuyer(flowSession.getCounterparty());
-            securitySellState.setStatus(SELL_MATCHED);
-            final Command<SellContract.Commands.Create> txCommand2 = new Command<>(new SellContract.Commands.Create(),
-                    securitySellState.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
-            final TransactionBuilder txBuilder2 = new TransactionBuilder(notary).withItems(new StateAndContract(securitySellState, SELL_SECURITY_CONTRACT_ID), txCommand2);
-            txBuilder2.verify(getServiceHub());
-            final SignedTransaction partSignedTx2 = getServiceHub().signInitialTransaction(txBuilder2);
-            FlowSession depositorySession = initiateFlow(securitySellState.getDepository());
-            // Send the state to the CounterParty, and receive it back with their signature.
-            final SignedTransaction fullySignedTx2 = subFlow(new CollectSignaturesFlow(partSignedTx2, Sets.newHashSet(depositorySession), CollectSignaturesFlow.Companion.tracker()));
-            subFlow(new FinalityFlow(fullySignedTx2));
+            SignedTransaction fullySignedTx2 = subFlow(new UpdateSellRequestToMatch(securitySellState));
             //Report to regulator
             subFlow(new ReportToRegulatorFlow(fullySignedTx2));
         }
 
 
-        return fullySignedTx1;
+        return fullySignedTx;
     }
 
 
@@ -126,6 +86,61 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
             FlowSession session = initiateFlow(regulator);
             subFlow(new SendTransactionFlow(session, fullySignedTx));
             return "Success";
+        }
+    }
+
+
+    @InitiatingFlow
+    public class MoveSecurityFlow extends FlowLogic<SignedTransaction> {
+        private final StateAndRef stateAndRef;
+
+        public MoveSecurityFlow(StateAndRef stateAndRef) {
+            this.stateAndRef = stateAndRef;
+            log.info("Inside ReportToRegulatorFlow for SellRequest called by ");
+        }
+
+        @Override
+        @Suspendable
+        public SignedTransaction call() throws FlowException {
+            log.info("Inside ReportToRegulatorFlow for SellRequest call method ");
+            final TransactionBuilder txBuilder = new TransactionBuilder(getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0));
+            SecurityStock.generateMove(txBuilder, stateAndRef, flowSession.getCounterparty());
+            txBuilder.verify(getServiceHub());
+            final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
+            FlowSession receiverSession = initiateFlow(flowSession.getCounterparty());
+            final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(receiverSession), CollectSignaturesFlow.Companion.tracker()));
+            SignedTransaction fullySignedTx1 = subFlow(new FinalityFlow(fullySignedTx));
+            return fullySignedTx1;
+        }
+    }
+
+
+
+    @InitiatingFlow
+    public class UpdateSellRequestToMatch extends FlowLogic<SignedTransaction> {
+        private final SecuritySellState securitySellState;
+
+        public UpdateSellRequestToMatch(SecuritySellState securitySellState) {
+            this.securitySellState = securitySellState;
+            log.info("Inside ReportToRegulatorFlow for SellRequest called by ");
+        }
+
+        @Override
+        @Suspendable
+        public SignedTransaction call() throws FlowException {
+            final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
+            log.info("Inside ReportToRegulatorFlow for SellRequest call method ");
+            securitySellState.setBuyer(flowSession.getCounterparty());
+            securitySellState.setStatus(SELL_MATCHED);
+            final Command<SellContract.Commands.Create> txCommand2 = new Command<>(new SellContract.Commands.Create(),
+                    securitySellState.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
+            final TransactionBuilder txBuilder = new TransactionBuilder(notary).withItems(new StateAndContract(securitySellState, SELL_SECURITY_CONTRACT_ID), txCommand2);
+            txBuilder.verify(getServiceHub());
+            final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
+            FlowSession depositorySession = initiateFlow(securitySellState.getDepository());
+            // Send the state to the CounterParty, and receive it back with their signature.
+            final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(depositorySession), CollectSignaturesFlow.Companion.tracker()));
+            return subFlow(new FinalityFlow(fullySignedTx));
         }
     }
 }

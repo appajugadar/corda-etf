@@ -103,7 +103,7 @@ public class SecurityStock implements Contract {
         return generateIssue(issuance, securityName, quantity, notary, null);
     }
 
-    public void generateMove(TransactionBuilder tx, StateAndRef<State> security, AbstractParty newOwner) {
+    public static void generateMove(TransactionBuilder tx, StateAndRef<State> security, AbstractParty newOwner) {
         tx.addInputState(security);
 
         tx.addOutputState(new TransactionState<>(new State(security.getState().getData().getIssuance(), newOwner, security.getState().getData().getSecurityName(), security.getState().getData().getQuantity()),
