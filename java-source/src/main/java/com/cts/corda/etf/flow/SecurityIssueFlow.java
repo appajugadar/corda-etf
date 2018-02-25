@@ -43,12 +43,12 @@ public class SecurityIssueFlow extends FlowLogic<SignedTransaction> {
             INITIALISING, VERIFYING_TRANSACTION, BUILDING, SIGNING, GATHERING_SIGS, FINALISING_TRANSACTION
     );
 
-    private Long guantity;
+    private Long quantity;
     private String securityName;
 
     public SecurityIssueFlow(Long quantity, String securityName) {
         super();
-        this.guantity = quantity;
+        this.quantity = quantity;
         this.securityName = securityName;
     }
 
@@ -61,11 +61,11 @@ public class SecurityIssueFlow extends FlowLogic<SignedTransaction> {
     @Override
     public SignedTransaction call() throws FlowException {
 
-        log.info("Called SecurityIssueFlow for quantity " + guantity + " securityName " + securityName);
+        log.info("Called SecurityIssueFlow for quantity " + quantity + " securityName " + securityName);
 
-        PartyAndReference issuer = this.getOurIdentity().ref(OpaqueBytes.of((securityName + guantity).getBytes()));
+        PartyAndReference issuer = this.getOurIdentity().ref(OpaqueBytes.of((securityName + quantity).getBytes()));
 
-        SecurityStock.State etfTradeState = new SecurityStock.State(issuer, getOurIdentity(), securityName, guantity);
+        SecurityStock.State etfTradeState = new SecurityStock.State(issuer, getOurIdentity(), securityName, quantity);
 
         log.info("etfTradeState -->> " + etfTradeState);
 

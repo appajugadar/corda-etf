@@ -2,6 +2,7 @@ package com.cts.corda.etf.state;
 
 import co.paralleluniverse.fibers.Suspendable;
 import kotlin.Unit;
+import lombok.extern.slf4j.Slf4j;
 import net.corda.core.contracts.*;
 import net.corda.core.crypto.NullKeys.NullPublicKey;
 import net.corda.core.identity.AbstractParty;
@@ -30,6 +31,7 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
  * This is a Java version of the CommercialPaper contract (chosen because it's simple). This demonstrates how the
  * use of Kotlin for implementation of the framework does not impose the same language choice on contract developers.
  */
+@Slf4j
 public class CommercialPaper implements Contract {
     public static final String JCP_PROGRAM_ID = "com.cts.corda.etf.state.CommercialPaper";
 
@@ -144,10 +146,14 @@ public class CommercialPaper implements Contract {
         tx.addCommand(new Command<>(new Commands.Redeem(), paper.getState().getData().getOwner().getOwningKey()));
     }
 
-    public void generateMove(TransactionBuilder tx, StateAndRef<State> paper, AbstractParty newOwner) {
+    public static void generateMove(TransactionBuilder tx, StateAndRef<State> paper, AbstractParty newOwner) {
+        log.info("Inside generate move method newOwner "+newOwner);
         tx.addInputState(paper);
-        tx.addOutputState(new TransactionState<>(new State(paper.getState().getData().getIssuance(), newOwner, paper.getState().getData().getFaceValue(), paper.getState().getData().getMaturityDate()), JCP_PROGRAM_ID, paper.getState().getNotary(), paper.getState().getEncumbrance()));
+        tx.addOutputState(new TransactionState<>(new State(paper.getState().getData().getIssuance(), newOwner, paper.getState().getData().getFaceValue(),
+                paper.getState().getData().getMaturityDate()),
+                JCP_PROGRAM_ID, paper.getState().getNotary(), paper.getState().getEncumbrance()));
         tx.addCommand(new Command<>(new Commands.Move(), paper.getState().getData().getOwner().getOwningKey()));
+        log.info("complete generatemove "+tx);
     }
 
     public interface Commands extends CommandData {

@@ -26,6 +26,7 @@ public class CommercialPaperAcceptorFlow extends FlowLogic<SignedTransaction> {
     public SignedTransaction call() throws FlowException {
         log.info("CommercialPaperAcceptorFlow inside call method ");
         SignedTransaction stx = subFlow(new SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker()));
+        log.info("CommercialPaperAcceptorFlow signed tx");
         return stx;
     }
 
