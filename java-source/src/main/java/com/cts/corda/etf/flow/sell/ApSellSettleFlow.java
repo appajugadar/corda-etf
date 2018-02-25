@@ -57,73 +57,15 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
 
         if (securitySellState != null) {
             //update sell state
+            securitySellState.setBuyer(flowSession.getCounterparty());
             SignedTransaction fullySignedTx2 = subFlow(new UpdateSellRequestToMatch(securitySellState));
             //Report to regulator
             subFlow(new ReportToRegulatorFlow(fullySignedTx2));
         }
 
-
         return fullySignedTx;
     }
 
-/*    @InitiatingFlow
-    public class ReportToRegulatorFlow extends ReportToRegulatorFlow {
-        public ReportToRegulatorFlow(SignedTransaction fullySignedTx) {
-            super(fullySignedTx);
-        }
-    }*/
 
-   /* @InitiatingFlow
-    public class MoveSecurityFlow extends FlowLogic<SignedTransaction> {
-        private final StateAndRef stateAndRef;
-
-        public MoveSecurityFlow(StateAndRef stateAndRef) {
-            this.stateAndRef = stateAndRef;
-            log.info("Inside ReportToRegulatorFlow for SellRequest called by ");
-        }
-
-        @Override
-        @Suspendable
-        public SignedTransaction call() throws FlowException {
-            log.info("Inside ReportToRegulatorFlow for SellRequest call method ");
-            final TransactionBuilder txBuilder = new TransactionBuilder(getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0));
-            SecurityStock.generateMove(txBuilder, stateAndRef, flowSession.getCounterparty());
-            txBuilder.verify(getServiceHub());
-            final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
-            FlowSession receiverSession = initiateFlow(flowSession.getCounterparty());
-            final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(receiverSession), CollectSignaturesFlow.Companion.tracker()));
-            SignedTransaction fullySignedTx1 = subFlow(new FinalityFlow(fullySignedTx));
-            return fullySignedTx1;
-        }
-    }*/
-
-
-    @InitiatingFlow
-    public class UpdateSellRequestToMatch extends FlowLogic<SignedTransaction> {
-        private final SecuritySellState securitySellState;
-
-        public UpdateSellRequestToMatch(SecuritySellState securitySellState) {
-            this.securitySellState = securitySellState;
-            log.info("Inside ReportToRegulatorFlow for SellRequest called by ");
-        }
-
-        @Override
-        @Suspendable
-        public SignedTransaction call() throws FlowException {
-            final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
-            log.info("Inside ReportToRegulatorFlow for SellRequest call method ");
-            securitySellState.setBuyer(flowSession.getCounterparty());
-            securitySellState.setStatus(SELL_MATCHED);
-            final Command<SellContract.Commands.Create> txCommand2 = new Command<>(new SellContract.Commands.Create(),
-                    securitySellState.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
-            final TransactionBuilder txBuilder = new TransactionBuilder(notary).withItems(new StateAndContract(securitySellState, SELL_SECURITY_CONTRACT_ID), txCommand2);
-            txBuilder.verify(getServiceHub());
-            final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
-            FlowSession depositorySession = initiateFlow(securitySellState.getDepository());
-            // Send the state to the CounterParty, and receive it back with their signature.
-            final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(depositorySession), CollectSignaturesFlow.Companion.tracker()));
-            return subFlow(new FinalityFlow(fullySignedTx));
-        }
-    }
 }
 

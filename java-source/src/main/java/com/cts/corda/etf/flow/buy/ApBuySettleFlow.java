@@ -66,29 +66,6 @@ public class ApBuySettleFlow extends FlowLogic<SignedTransaction> {
         return stx;
     }
 
-/*    @InitiatingFlow
-    public class ReportToRegulatorFlow extends FlowLogic<String> {
-        private final SignedTransaction fullySignedTx;
-
-        public ReportToRegulatorFlow(SignedTransaction fullySignedTx) {
-            this.fullySignedTx = fullySignedTx;
-            log.info("Inside ApBuySettleFlow ReportToRegulatorFlow ");
-        }
-
-        @Override
-        @Suspendable
-        public String call() throws FlowException {
-            log.info("Inside ApBuySettleFlow ReportToRegulatorFlow for BuyRequest call method ");
-            Party regulator = (Party) getServiceHub().getIdentityService().partiesFromName("Regulator", true).toArray()[0];
-            FlowSession session = initiateFlow(regulator);
-            log.info("Inside ApBuySettleFlow ReportToRegulatorFlow after initiate flow ");
-            subFlow(new SendTransactionFlow(session, fullySignedTx));
-            log.info("Inside ApBuySettleFlow ReportToRegulatorFlow after SendTransactionFlow ");
-            return "Success";
-        }
-    }*/
-
-
     class SignTxFlow extends SignTransactionFlow {
 
         private SignTxFlow(FlowSession otherPartyFlow, ProgressTracker progressTracker) {
@@ -105,31 +82,6 @@ public class ApBuySettleFlow extends FlowLogic<SignedTransaction> {
         }
     }
 
-    @InitiatingFlow
-    public class UpdateBuyRequestToMatch extends FlowLogic<SignedTransaction> {
-        private final SecurityBuyState securityBuyState;
 
-        public UpdateBuyRequestToMatch(SecurityBuyState securityBuyState) {
-            this.securityBuyState = securityBuyState;
-            log.info("Inside UpdateBuyRequestToMatch for BuyRequest called by ");
-        }
-
-        @Override
-        @Suspendable
-        public SignedTransaction call() throws FlowException {
-            final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
-            log.info("Inside UpdateBuyRequestToMatch for BuyRequest call method ");
-            securityBuyState.setStatus(BUY_MATCHED);
-            final Command<BuyContract.Commands.Create> txCommand2 = new Command<>(new BuyContract.Commands.Create(),
-                    securityBuyState.getParticipants().stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
-            final TransactionBuilder txBuilder = new TransactionBuilder(notary).withItems(new StateAndContract(securityBuyState, BUY_SECURITY_CONTRACT_ID), txCommand2);
-            txBuilder.verify(getServiceHub());
-            final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
-            FlowSession depositorySession = initiateFlow(securityBuyState.getDepository());
-            // Send the state to the CounterParty, and receive it back with their signature.
-            final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(depositorySession), CollectSignaturesFlow.Companion.tracker()));
-            return subFlow(new FinalityFlow(fullySignedTx));
-        }
-    }
 }
 

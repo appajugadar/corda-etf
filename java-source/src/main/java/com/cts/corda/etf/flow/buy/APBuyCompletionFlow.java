@@ -70,13 +70,5 @@ public class APBuyCompletionFlow extends FlowLogic<String> {
         }
     }
 
-
-/*    @InitiatingFlow
-    public class ReportToRegulatorFlow extends ReportToRegulatorFlow {
-        public ReportToRegulatorFlow(SignedTransaction fullySignedTx) {
-            super(fullySignedTx);
-        }
-    }*/
-
 }
 
