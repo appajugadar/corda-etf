@@ -1,7 +1,6 @@
 package com.cts.corda.etf.flow.buy;
 
 import co.paralleluniverse.fibers.Suspendable;
-import com.cts.corda.etf.flow.CommercialPaperMoveFlow;
 import com.cts.corda.etf.flow.sell.ApSellSettleFlow;
 import lombok.extern.slf4j.Slf4j;
 import net.corda.core.flows.*;

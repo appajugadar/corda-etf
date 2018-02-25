@@ -1,4 +1,4 @@
-package com.cts.corda.etf.flow;
+package com.cts.corda.etf.flow.commercialpaper;
 
 import co.paralleluniverse.fibers.Suspendable;
 import lombok.extern.slf4j.Slf4j;

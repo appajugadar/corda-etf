@@ -82,7 +82,7 @@ public class SecurityIssueFlow extends FlowLogic<SignedTransaction> {
         progressTracker.setCurrentStep(VERIFYING_TRANSACTION);
 
         // Verify that the transaction is valid.
-        getLogger().info("Before verify TX");
+        log.info("Before verify TX");
         txBuilder.verify(getServiceHub());
 
 

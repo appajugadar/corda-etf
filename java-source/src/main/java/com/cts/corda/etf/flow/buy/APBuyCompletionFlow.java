@@ -37,13 +37,7 @@ public class APBuyCompletionFlow extends FlowLogic<String> {
         log.info("APBuyCompletionFlow inside call method ");
 
         SignedTransaction stx = subFlow(new APBuyCompletionFlow.SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker()));
-        ContractState output = stx.getTx().getOutputs().get(0).getData();
-        SecurityBuyState buyState = (SecurityBuyState) output;
-
-        final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
-        List<Party> ls = new ArrayList<>();
-        ls.add(buyState.getBuyer());
-        ls.add(buyState.getSeller());
+        SecurityBuyState buyState = (SecurityBuyState) stx.getTx().getOutputs().get(0).getData();
 
         Amount<Currency> amount = new Amount<Currency>(buyState.getQuantity() * 100, Currency.getInstance("GBP"));
         CashPaymentFlow.PaymentRequest paymentRequest = new CashPaymentFlow.PaymentRequest(amount, buyState.getSeller(), false, new HashSet<>());
@@ -51,14 +45,11 @@ public class APBuyCompletionFlow extends FlowLogic<String> {
 
         log.info("securitySellState.getSeller() " + buyState.getSeller());
         FlowSession sellerSession = initiateFlow(buyState.getSeller());
-
-        //TODO send linear id to seller  sellerSession.send(buyState.getSellerStateLinearId());
-
         log.info("sellerSession.getCounterpartyFlowInfo() " + sellerSession.getCounterpartyFlowInfo());
+
 
         //Report to regulator
         subFlow(new ReportToRegulatorFlow(stx));
-
         return "Success";
     }
 

@@ -1,4 +1,4 @@
-package com.cts.corda.etf.flow;
+package com.cts.corda.etf.flow.commercialpaper;
 
 import co.paralleluniverse.fibers.Suspendable;
 import com.cts.corda.etf.state.CommercialPaper;
