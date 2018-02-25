@@ -7,7 +7,7 @@ import net.corda.core.flows.FlowSession;
 import net.corda.core.flows.InitiatedBy;
 import net.corda.core.flows.InitiatingFlow;
 
-@InitiatedBy(ApBuySettleFlow.class)
+@InitiatedBy(ApBuySettleFlow.UpdateBuyRequestToMatch.class)
 @InitiatingFlow
 @Slf4j
 public class DepositoryBuyAcceptorFlow extends AbstractTransactionAcceptorFlow {

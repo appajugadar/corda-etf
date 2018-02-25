@@ -1,27 +1,19 @@
 package com.cts.corda.etf.flow.sell;
 
 import co.paralleluniverse.fibers.Suspendable;
-import com.cts.corda.etf.contract.SettlementContract;
+import com.cts.corda.etf.contract.SecurityStock;
+import com.cts.corda.etf.flow.regulator.ReportToRegulatorFlow;
 import com.cts.corda.etf.flow.depository.DepositoryBuyFlow;
 import com.cts.corda.etf.state.SecuritySellState;
-import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
-import net.corda.core.contracts.Command;
 import net.corda.core.contracts.ContractState;
-import net.corda.core.contracts.StateAndContract;
+import net.corda.core.contracts.StateAndRef;
 import net.corda.core.flows.*;
-import net.corda.core.identity.AbstractParty;
-import net.corda.core.identity.Party;
 import net.corda.core.transactions.SignedTransaction;
-import net.corda.core.transactions.TransactionBuilder;
 import net.corda.core.utilities.ProgressTracker;
-import net.corda.finance.flows.TwoPartyTradeFlow;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import static com.cts.corda.etf.contract.SettlementContract.SECURITY_SETTLEMENT_CONTRACT_ID;
 import static net.corda.core.contracts.ContractsDSL.requireThat;
 
 @InitiatingFlow
@@ -30,14 +22,6 @@ import static net.corda.core.contracts.ContractsDSL.requireThat;
 public class APSellCompletionFlow extends FlowLogic<SignedTransaction> {
 
     private final FlowSession flowSession;
-    private final ProgressTracker.Step SELF_ISSUING = new ProgressTracker.Step("Got session ID back, issuing and timestamping some commercial paper");
-    private final ProgressTracker.Step TRADING = new ProgressTracker.Step("Starting the trade flow.") {
-        @Override
-        public ProgressTracker childProgressTracker() {
-            return TwoPartyTradeFlow.Seller.Companion.tracker();
-        }
-    };
-
     public APSellCompletionFlow(FlowSession flowSession) {
         this.flowSession = flowSession;
         log.info("Inside APSellCompletionFlow called by " + flowSession.getCounterparty());
@@ -48,22 +32,25 @@ public class APSellCompletionFlow extends FlowLogic<SignedTransaction> {
     public SignedTransaction call() throws FlowException {
         log.info("APSellCompletionFlow inside call method ");
 
-        SignedTransaction stx = subFlow(new APSellCompletionFlow.SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker()));
-        ContractState output = stx.getTx().getOutputs().get(0).getData();
-        SecuritySellState newSellState = (SecuritySellState) output;
+        SignedTransaction stx = subFlow(new SignTxFlow(flowSession, SignTransactionFlow.Companion.tracker()));
+        SecuritySellState sellState = (SecuritySellState) stx.getTx().getOutputs().get(0).getData();
 
-        final Party notary = getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0);
-        List<Party> ls = new ArrayList<>();
-        ls.add(newSellState.getBuyer());
-        ls.add(newSellState.getSeller());
+        //Move security
+        List<StateAndRef<SecurityStock.State>> etfTradeStatesQueryResp = getServiceHub().getVaultService().queryBy(SecurityStock.State.class).getStates();
+        StateAndRef<SecurityStock.State> stateAndRef = null;
+        for (StateAndRef<SecurityStock.State> stateAndRef1 : etfTradeStatesQueryResp) {
+            stateAndRef = stateAndRef1;
+        }
+        subFlow(new MoveSecurityFlow(stateAndRef, sellState.getBuyer()));
 
-        final Command<SettlementContract.Commands.Settle> txCommand = new Command<>(new SettlementContract.Commands.Settle(), ls.stream().map(AbstractParty::getOwningKey).collect(Collectors.toList()));
-        final TransactionBuilder txBuilder = new TransactionBuilder(notary).withItems(new StateAndContract(newSellState, SECURITY_SETTLEMENT_CONTRACT_ID), txCommand);
-        final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
-        FlowSession buyerSession = initiateFlow(newSellState.getBuyer());
-        final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(buyerSession), CollectSignaturesFlow.Companion.tracker()));
-        subFlow(new FinalityFlow(fullySignedTx));
-        return fullySignedTx;
+        // call flow on buyer side for cash payment
+        log.info("securitySellState.getBuyer() " + sellState.getBuyer());
+        FlowSession sellerSession = initiateFlow(sellState.getBuyer());
+        log.info("sellerSession.getCounterpartyFlowInfo() " + sellerSession.getCounterpartyFlowInfo());
+
+        //Report to regulator
+        subFlow(new ReportToRegulatorFlow(stx));
+        return stx;
     }
 
     class SignTxFlow extends SignTransactionFlow {
@@ -84,5 +71,53 @@ public class APSellCompletionFlow extends FlowLogic<SignedTransaction> {
             });
         }
     }
+/*
+    @InitiatingFlow
+    public class MoveSecurityFlow extends FlowLogic<SignedTransaction> {
+        private final StateAndRef stateAndRef;
+        private final Party receiverParty;
+        public MoveSecurityFlow(StateAndRef stateAndRef, Party receiverParty) {
+            this.stateAndRef = stateAndRef;
+            this.receiverParty = receiverParty;
+            log.info("Inside MoveSecurityFlow for SellRequest called by ");
+        }
+
+        @Override
+        @Suspendable
+        public SignedTransaction call() throws FlowException {
+            log.info("Inside MoveSecurityFlow for SellRequest call method ");
+            final TransactionBuilder txBuilder = new TransactionBuilder(getServiceHub().getNetworkMapCache().getNotaryIdentities().get(0));
+            SecurityStock.generateMove(txBuilder, stateAndRef, receiverParty);
+            txBuilder.verify(getServiceHub());
+            final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
+            log.info("Inside MoveSecurityFlow for SellRequest call method before initiateflow "+receiverParty);
+            FlowSession receiverSession = initiateFlow(receiverParty);
+            log.info("Inside MoveSecurityFlow for SellRequest call method after initiateflow ");
+            final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(receiverSession), CollectSignaturesFlow.Companion.tracker()));
+            SignedTransaction fullySignedTx1 = subFlow(new FinalityFlow(fullySignedTx));
+            return fullySignedTx1;
+        }
+    }*/
+
+   /* @InitiatingFlow
+    public class ReportToRegulatorFlow extends FlowLogic<String> {
+        private final SignedTransaction fullySignedTx;
+
+        public ReportToRegulatorFlow(SignedTransaction fullySignedTx) {
+            this.fullySignedTx = fullySignedTx;
+            log.info("Inside ReportToRegulatorFlow ");
+        }
+
+        @Override
+        @Suspendable
+        public String call() throws FlowException {
+            log.info("Inside ReportToRegulatorFlow for BuyRequest call method ");
+            Party regulator = (Party) getServiceHub().getIdentityService().partiesFromName("Regulator", true).toArray()[0];
+            FlowSession session = initiateFlow(regulator);
+            subFlow(new SendTransactionFlow(session, fullySignedTx));
+            return "Success";
+        }
+    }*/
+
 }
 

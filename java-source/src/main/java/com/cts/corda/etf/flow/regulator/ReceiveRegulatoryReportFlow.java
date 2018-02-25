@@ -1,18 +1,17 @@
 package com.cts.corda.etf.flow.regulator;
 
 import co.paralleluniverse.fibers.Suspendable;
-import com.cts.corda.etf.flow.sell.ApSellSettleFlow;
 import lombok.extern.slf4j.Slf4j;
 import net.corda.core.flows.*;
 import net.corda.core.node.StatesToRecord;
 
-@InitiatedBy(ApSellSettleFlow.ReportToRegulatorFlow.class)
+@InitiatedBy(ReportToRegulatorFlow.class)
 @Slf4j
-public class ReceiveRegulatoryReportSellRequestFlow extends FlowLogic<String> {
+public class ReceiveRegulatoryReportFlow extends FlowLogic<String> {
 
     private final FlowSession flowSession;
 
-    public ReceiveRegulatoryReportSellRequestFlow(FlowSession flowSession) {
+    public ReceiveRegulatoryReportFlow(FlowSession flowSession) {
         this.flowSession = flowSession;
         log.info("Inside ReceiveRegulatoryReportSellRequestFlow called by " + flowSession.getCounterparty());
     }

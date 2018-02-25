@@ -3,7 +3,7 @@ package com.cts.corda.etf.flow.sell;
 import co.paralleluniverse.fibers.Suspendable;
 import com.cts.corda.etf.contract.SecurityStock;
 import com.cts.corda.etf.contract.SellContract;
-import com.cts.corda.etf.flow.AbstractReportToRegulatoryFlow;
+import com.cts.corda.etf.flow.regulator.ReportToRegulatorFlow;
 import com.cts.corda.etf.flow.buy.APBuyCompletionFlow;
 import com.cts.corda.etf.state.SecuritySellState;
 import com.google.common.collect.Sets;
@@ -44,7 +44,8 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
         for (StateAndRef<SecurityStock.State> stateAndRef1 : etfTradeStatesQueryResp) {
             stateAndRef = stateAndRef1;
         }
-        SignedTransaction fullySignedTx = subFlow(new MoveSecurityFlow(stateAndRef));
+
+        SignedTransaction fullySignedTx = subFlow(new MoveSecurityFlow(stateAndRef, flowSession.getCounterparty()));
 
         //UPDATE sell request as matched
         List<StateAndRef<SecuritySellState>> ref = getServiceHub().getVaultService().queryBy(SecuritySellState.class).getStates();
@@ -65,14 +66,14 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
         return fullySignedTx;
     }
 
-    @InitiatingFlow
-    public class ReportToRegulatorFlow extends AbstractReportToRegulatoryFlow {
+/*    @InitiatingFlow
+    public class ReportToRegulatorFlow extends ReportToRegulatorFlow {
         public ReportToRegulatorFlow(SignedTransaction fullySignedTx) {
             super(fullySignedTx);
         }
-    }
+    }*/
 
-    @InitiatingFlow
+   /* @InitiatingFlow
     public class MoveSecurityFlow extends FlowLogic<SignedTransaction> {
         private final StateAndRef stateAndRef;
 
@@ -94,7 +95,7 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
             SignedTransaction fullySignedTx1 = subFlow(new FinalityFlow(fullySignedTx));
             return fullySignedTx1;
         }
-    }
+    }*/
 
 
     @InitiatingFlow

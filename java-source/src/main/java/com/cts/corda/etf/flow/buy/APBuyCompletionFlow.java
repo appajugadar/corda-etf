@@ -1,14 +1,13 @@
 package com.cts.corda.etf.flow.buy;
 
 import co.paralleluniverse.fibers.Suspendable;
-import com.cts.corda.etf.flow.AbstractReportToRegulatoryFlow;
+import com.cts.corda.etf.flow.regulator.ReportToRegulatorFlow;
 import com.cts.corda.etf.flow.depository.DepositorySellFlow;
 import com.cts.corda.etf.state.SecurityBuyState;
 import lombok.extern.slf4j.Slf4j;
 import net.corda.core.contracts.Amount;
 import net.corda.core.contracts.ContractState;
 import net.corda.core.flows.*;
-import net.corda.core.identity.Party;
 import net.corda.core.transactions.SignedTransaction;
 import net.corda.core.utilities.ProgressTracker;
 import net.corda.finance.flows.CashPaymentFlow;
@@ -72,12 +71,12 @@ public class APBuyCompletionFlow extends FlowLogic<String> {
     }
 
 
-    @InitiatingFlow
-    public class ReportToRegulatorFlow extends AbstractReportToRegulatoryFlow {
+/*    @InitiatingFlow
+    public class ReportToRegulatorFlow extends ReportToRegulatorFlow {
         public ReportToRegulatorFlow(SignedTransaction fullySignedTx) {
             super(fullySignedTx);
         }
-    }
+    }*/
 
 }
 
