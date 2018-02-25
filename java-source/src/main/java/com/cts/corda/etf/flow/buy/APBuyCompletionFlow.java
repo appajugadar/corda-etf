@@ -1,6 +1,7 @@
 package com.cts.corda.etf.flow.buy;
 
 import co.paralleluniverse.fibers.Suspendable;
+import com.cts.corda.etf.flow.AbstractReportToRegulatoryFlow;
 import com.cts.corda.etf.flow.depository.DepositorySellFlow;
 import com.cts.corda.etf.state.SecurityBuyState;
 import lombok.extern.slf4j.Slf4j;
@@ -72,25 +73,11 @@ public class APBuyCompletionFlow extends FlowLogic<String> {
 
 
     @InitiatingFlow
-    public class ReportToRegulatorFlow extends FlowLogic<String> {
-        private final SignedTransaction fullySignedTx;
-
+    public class ReportToRegulatorFlow extends AbstractReportToRegulatoryFlow {
         public ReportToRegulatorFlow(SignedTransaction fullySignedTx) {
-            this.fullySignedTx = fullySignedTx;
-            log.info("Inside ReportToRegulatorFlow for BuyRequest called by ");
-        }
-
-        @Override
-        @Suspendable
-        public String call() throws FlowException {
-            log.info("Inside ReportToRegulatorFlow for BuyRequest call method ");
-            Party regulator = (Party) getServiceHub().getIdentityService().partiesFromName("Regulator", true).toArray()[0];
-            FlowSession session = initiateFlow(regulator);
-            subFlow(new SendTransactionFlow(session, fullySignedTx));
-            return "Success";
+            super(fullySignedTx);
         }
     }
-
 
 }
 

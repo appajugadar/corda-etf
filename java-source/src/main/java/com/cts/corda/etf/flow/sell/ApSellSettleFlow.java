@@ -3,6 +3,7 @@ package com.cts.corda.etf.flow.sell;
 import co.paralleluniverse.fibers.Suspendable;
 import com.cts.corda.etf.contract.SecurityStock;
 import com.cts.corda.etf.contract.SellContract;
+import com.cts.corda.etf.flow.AbstractReportToRegulatoryFlow;
 import com.cts.corda.etf.flow.buy.APBuyCompletionFlow;
 import com.cts.corda.etf.state.SecuritySellState;
 import com.google.common.collect.Sets;
@@ -64,27 +65,12 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
         return fullySignedTx;
     }
 
-
     @InitiatingFlow
-    public class ReportToRegulatorFlow extends FlowLogic<String> {
-        private final SignedTransaction fullySignedTx;
-
+    public class ReportToRegulatorFlow extends AbstractReportToRegulatoryFlow {
         public ReportToRegulatorFlow(SignedTransaction fullySignedTx) {
-            this.fullySignedTx = fullySignedTx;
-            log.info("Inside ReportToRegulatorFlow for SellRequest called by ");
-        }
-
-        @Override
-        @Suspendable
-        public String call() throws FlowException {
-            log.info("Inside ReportToRegulatorFlow for SellRequest call method ");
-            Party regulator = (Party) getServiceHub().getIdentityService().partiesFromName("Regulator", true).toArray()[0];
-            FlowSession session = initiateFlow(regulator);
-            subFlow(new SendTransactionFlow(session, fullySignedTx));
-            return "Success";
+            super(fullySignedTx);
         }
     }
-
 
     @InitiatingFlow
     public class MoveSecurityFlow extends FlowLogic<SignedTransaction> {
