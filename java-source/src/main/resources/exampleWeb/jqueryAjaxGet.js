@@ -2,6 +2,8 @@ $(document).ready(function() {
 	
 	getCashBalance();
 	getSecurityBalance();
+	getBuyRequests();
+    getSellRequests();
 	getMyInfo();
 	// DO GET
 	function getCashBalance(){
@@ -52,6 +54,62 @@ $(document).ready(function() {
     		});
     	}
 
+    			function getBuyRequests(){
+        		$.ajax({
+        			type : "GET",
+        			url : window.location + "../../../../api/rest/BuyRequests",
+        			success: function(result){
+        				$.each(result, function(i, stateref){
+                                        var buyRequestRow = '<tr>' +
+                                                                '<td>' + stateref.state.data.linearId.id + '</td>' +
+                                		                        '<td>' + stateref.state.data.securityName + '</td>' +
+                                							    '<td>' + stateref.state.data.quantity + '</td>' +
+                                							    '<td>' + stateref.state.data.buyer + '</td>' +
+                                							    '<td>' + stateref.state.data.seller + '</td>' +
+                                							    '<td>' + stateref.state.data.status + '</td>' +
+                                						  '</tr>';
+                                        $('#buyRequestTable tbody').append(buyRequestRow);
+
+            		        });
+
+            				$( "#buyRequestTable tbody tr:odd" ).addClass("info");
+            				$( "#buyRequestTable tbody tr:even" ).addClass("success");
+            			},
+            			error : function(e) {
+            				alert("ERROR: ", e);
+            				console.log("ERROR: ", e);
+            			}
+            		});
+            	}
+
+
+function getSellRequests(){
+        		$.ajax({
+        			type : "GET",
+        			url : window.location + "../../../../api/rest/SellRequests",
+        			success: function(result){
+        				$.each(result, function(i, stateref){
+                                        var sellRequestRow = '<tr>' +
+                                                                '<td>' + stateref.state.data.linearId.id + '</td>' +
+                                		                        '<td>' + stateref.state.data.securityName + '</td>' +
+                                							    '<td>' + stateref.state.data.quantity + '</td>' +
+                                							    '<td>' + stateref.state.data.buyer + '</td>' +
+                                							    '<td>' + stateref.state.data.seller + '</td>' +
+                                							    '<td>' + stateref.state.data.status + '</td>' +
+                                						  '</tr>';
+                                        $('#sellRequestTable tbody').append(sellRequestRow);
+
+            		        });
+
+            				$( "#sellRequestTable tbody tr:odd" ).addClass("info");
+            				$( "#sellRequestTable tbody tr:even" ).addClass("success");
+            			},
+            			error : function(e) {
+            				alert("ERROR: ", e);
+            				console.log("ERROR: ", e);
+            			}
+            		});
+            	}
 
 function getMyInfo(){
     $.ajax({
