@@ -69,7 +69,6 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
         getLogger().info("Before verify ApSellSettleFlow");
         txBuilder.verify(getServiceHub());
         final SignedTransaction partSignedTx = getServiceHub().signInitialTransaction(txBuilder);
-        //FlowSession fs = initiateFlow(flowSession.getCounterparty());
         final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(flowSession), CollectSignaturesFlow.Companion.tracker()));
 
         log.info("Inside EtfIssue flow finalize tx11");
@@ -97,13 +96,10 @@ public class ApSellSettleFlow extends FlowLogic<SignedTransaction> {
             final TransactionBuilder txBuilder2 = new TransactionBuilder(notary).withItems(new StateAndContract(securitySellState, SELL_SECURITY_CONTRACT_ID), txCommand2);
             txBuilder2.verify(getServiceHub());
             final SignedTransaction partSignedTx2 = getServiceHub().signInitialTransaction(txBuilder2);
-
             FlowSession depositorySession = initiateFlow(securitySellState.getDepository());
-            log.info("AP Sell flow initiated depo flow ");
-            // Send the state to the counterparty, and receive it back with their signature.
+            // Send the state to the CounterParty, and receive it back with their signature.
             final SignedTransaction fullySignedTx2 = subFlow(new CollectSignaturesFlow(partSignedTx2, Sets.newHashSet(depositorySession), CollectSignaturesFlow.Companion.tracker()));
             subFlow(new FinalityFlow(fullySignedTx2));
-
             //Report to regulator
             subFlow(new ReportToRegulatorFlow(fullySignedTx2));
         }
