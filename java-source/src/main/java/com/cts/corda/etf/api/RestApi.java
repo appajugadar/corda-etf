@@ -185,6 +185,9 @@ public class RestApi {
         if (notaries.isEmpty()) {
             throw new IllegalStateException("Could not find a notary.");
         }
+        log.info("Issue self cash : amount " + amount+"   currency "+currency);
+
+
         FlowHandle<AbstractCashFlow.Result> flowHandle = rpcOps.startFlowDynamic(net.corda.finance.flows.CashIssueFlow.class,
                 new Amount<Currency>(amount * 100, Currency.getInstance(currency)),
                 OpaqueBytes.of("40".getBytes()),

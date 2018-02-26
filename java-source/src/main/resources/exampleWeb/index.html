@@ -7,17 +7,66 @@
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 	  <script src="jqueryAjaxGet.js"></script>
-	  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
       <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
 </head>
- 
-<br>
 
+
+<br><br><p/>
 <h1 class="greeting-id">Party : </h1>
+<br><br><p/>
+<div id="response">
+    <pre></pre>
+</div>
+<div class="cash-balance-container">
+    <h3>Self Issue Cash</h3>
+    <div class="row col-md-4 table-responsive">
+        <form id="rest-form" method="post" name="rest-form">
+            <table>
+                <tr>
+                    <td>Currency</td>
+                    <td><input name="currency" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>Quantity</td>
+                    <td><input name="amount" type="text" /></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><button type="submit" id="cashIssueButton">Submit</button></td>
+                </tr>
+            </table>
+        </form>
+    </div>
+</div>
+<br><br><p/><br><br><p/>
 
+<div class="security-issue-container">
+    <h3>Self Issue ETF</h3>
+    <div class="row col-md-4 table-responsive">
+        <form action="securityIssue" method="post" name="securityIssueForm">
+            <table>
+                <tr>
+                    <td>ETF Name</td>
+                    <td><input name="securityName" type="text" /></td>
+                </tr>
+                <tr>
+                    <td>Quantity</td>
+                    <td><input name="quantity" type="text" /></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td><button type="submit">Submit</button></td>
+                </tr>
+            </table>
+        </form>
+    </div>
+</div>
+
+<br><br><p/><br><br><p/>
 	<div class="cash-balance-container">
-		<h3>Cash Balance</h3>
-			<div class="row col-md-7 table-responsive">
+		<h1>Cash Balance</h1>
+			<div class="row col-md-4 table-responsive">
 				<table id="cashBalanceTable" class="table table-bordered table-hover">
 					<thead>
 						<tr>
@@ -30,13 +79,10 @@
 				</table>
 			</div>
 	</div>
-
-	<br></br>
-	<p></p>
-
+<br><br><p/><br><br><p/>
 	<div class="security-balance-container">
-		<h3>Security Balance</h3>
-		<div class="row col-md-7 table-responsive">
+		<h1>Security Balance</h1>
+		<div class="row col-md-4 table-responsive">
 			<table id="securityBalanceTable" class="table table-bordered table-hover">
 				<thead>
 				<tr>
@@ -50,10 +96,9 @@
 		</div>
 	</div>
 
-<br></br>
-<p></p>
+<br><br><p/><br><br><p/>
 <div class="buy-request-container">
-    <h3>Buy Requests</h3>
+    <h1>Buy Requests</h1>
     <div class="row col-md-7 table-responsive">
         <table id="buyRequestTable" class="table table-bordered table-hover">
             <thead>
@@ -73,11 +118,10 @@
 </div>
 
 
-<br></br>
-<p></p>
+<br><br><p/><br><br><p/>
 
 <div class="buy-request-container">
-    <h3>Sell Requests</h3>
+    <h1>Sell Requests</h1>
     <div class="row col-md-7 table-responsive">
         <table id="sellRequestTable" class="table table-bordered table-hover">
             <thead>

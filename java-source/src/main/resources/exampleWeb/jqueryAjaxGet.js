@@ -6,6 +6,30 @@ $(document).ready(function() {
     getSellRequests();
 	getMyInfo();
 	// DO GET
+
+    $("button[id='cashIssueButton']").click(function(data){
+		  var amt = $('input[name="amount"]').val();
+		  var currency = $('input[name="currency"]').val();
+          alert( "Data currency: " + currency +"  amt "+amt);
+
+
+    $.ajax({
+    					  type : "GET",
+                		  url : window.location + "../../../../api/rest/self-issue-cash?amount="+AMT+"&currency"+currency,
+                          success: function(result){
+                		alert("SUCCESS: ", e);
+                			},
+                			error : function(e) {
+                				alert("ERROR: ", e);
+                				console.log("ERROR: ", e);
+                			}
+                		});
+});
+
+
+
+
+
 	function getCashBalance(){
 		$.ajax({
 			type : "GET",
