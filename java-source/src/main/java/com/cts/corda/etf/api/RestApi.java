@@ -115,7 +115,9 @@ public class RestApi {
         Map<Currency, Amount<Currency>> balanceMap =  net.corda.finance.contracts.GetBalances.getCashBalances(rpcOps);
         List<CashBalance> balances = new ArrayList<>();
         for (Amount<Currency> cash:balanceMap.values()) {
-            balances.add(new CashBalance(cash.getToken().getCurrencyCode(), cash.getQuantity()));
+            CashBalance cashBalance = new CashBalance(cash.getToken().getCurrencyCode(), cash.getQuantity());
+            balances.add(cashBalance);
+            log.info("cashBalance "+cashBalance);
         }
         return balances;
     }
@@ -127,7 +129,7 @@ public class RestApi {
             return Response.status(BAD_REQUEST).entity("Query parameter 'security Quantity' must be non-negative.\n").build();
         }
 
-        Party depositoryParty = getPartyWithName(new CordaX500Name("DEPOSITORY", "London", "GB"));
+        Party depositoryParty = getPartyWithName(new CordaX500Name("DTCC", "London", "GB"));
 
         try {
             FlowProgressHandle<SignedTransaction> flowHandle = rpcOps
@@ -156,7 +158,7 @@ public class RestApi {
             return Response.status(BAD_REQUEST).entity("Query parameter 'security Quantity' must be non-negative.\n").build();
         }
 
-        Party depositoryParty = getPartyWithName(new CordaX500Name("DEPOSITORY", "London", "GB"));
+        Party depositoryParty = getPartyWithName(new CordaX500Name("DTCC", "London", "GB"));
 
         try {
             FlowProgressHandle<SignedTransaction> flowHandle = rpcOps
@@ -227,10 +229,6 @@ public class RestApi {
     @Path("me")
     @Produces(MediaType.APPLICATION_JSON)
     public Map<String, String> whoami() {
-        log.info("myLegalName.getCommonName() "+myLegalName.getCommonName());
-        log.info("myLegalName.getX500Principal() "+myLegalName.getX500Principal());
-        log.info("myLegalName.getX500Principal().getName() "+myLegalName.getX500Principal().getName());
-        log.info("myLegalName.getOrganisation() "+myLegalName.getOrganisation());
         return ImmutableMap.of("me", myLegalName.getX500Principal().getName());
     }
 

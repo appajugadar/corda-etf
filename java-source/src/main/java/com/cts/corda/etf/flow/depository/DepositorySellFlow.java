@@ -55,7 +55,7 @@ public class DepositorySellFlow extends FlowLogic<SignedTransaction> {
         }
 
         log.info("DepositoryBuyFlow flowSession " + flowSession.getCounterpartyFlowInfo());
-        if (securityBuyState != null) {
+        if (securityBuyState != null && !securityBuyState.getBuyer().equals(flowSession.getCounterparty())) {
             //update sell state
             securityBuyState.setSeller(flowSession.getCounterparty());
             securityBuyState.setStatus(BUY_MATCHED);
@@ -74,7 +74,6 @@ public class DepositorySellFlow extends FlowLogic<SignedTransaction> {
             final SignedTransaction fullySignedTx = subFlow(new CollectSignaturesFlow(partSignedTx, Sets.newHashSet(sellerSession), CollectSignaturesFlow.Companion.tracker()));
             // Notarise and record the transaction in both parties' vaults.
             subFlow(new FinalityFlow(fullySignedTx));
-
         } else {
             log.info("No buy request found ");
         }
@@ -95,9 +94,6 @@ public class DepositorySellFlow extends FlowLogic<SignedTransaction> {
             requireThat(require -> {
                 ContractState output = stx.getTx().getOutputs().get(0).getData();
                 require.using("This must be an SecuritySell transaction.", output instanceof SecuritySellState);
-                SecuritySellState iou = (SecuritySellState) output;
-
-                require.using("I won't accept Sell with a value over 100.", iou.getQuantity() <= 100);
                 return null;
             });
         }

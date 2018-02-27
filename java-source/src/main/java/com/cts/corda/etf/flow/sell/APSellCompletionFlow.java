@@ -66,7 +66,7 @@ public class APSellCompletionFlow extends FlowLogic<SignedTransaction> {
                 require.using("This must be an SecuritySell transaction.", output instanceof SecuritySellState);
                 SecuritySellState newSellState = (SecuritySellState) output;
                 log.info("Adding new state to o/p");
-                require.using("I won't accept SecurityBuy with a quantity over 100.", newSellState.getQuantity() <= 100);
+             //   require.using("I won't accept SecurityBuy with a quantity over 100.", newSellState.getQuantity() <= 100);
                 return null;
             });
         }

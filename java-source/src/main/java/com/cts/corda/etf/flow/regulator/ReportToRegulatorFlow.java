@@ -20,7 +20,7 @@ public class ReportToRegulatorFlow extends FlowLogic<String> {
     @Suspendable
     public String call() throws FlowException {
         log.info("Inside ReportToRegulatorFlow for BuyRequest call method ");
-        Party regulator = (Party) getServiceHub().getIdentityService().partiesFromName("Regulator", true).toArray()[0];
+        Party regulator = (Party) getServiceHub().getIdentityService().partiesFromName("FCA", true).toArray()[0];
         FlowSession session = initiateFlow(regulator);
         subFlow(new SendTransactionFlow(session, fullySignedTx));
         return "Success";

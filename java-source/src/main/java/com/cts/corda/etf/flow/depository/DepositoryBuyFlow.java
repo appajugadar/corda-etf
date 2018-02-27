@@ -54,7 +54,7 @@ public class DepositoryBuyFlow extends FlowLogic<SignedTransaction> {
 
         log.info("DepositoryBuyFlow flowSession " + flowSession.getCounterpartyFlowInfo());
 
-        if (securitySellState != null) {
+        if (securitySellState != null && !securitySellState.getSeller().equals(flowSession.getCounterparty())) {
             //update sell state
             securitySellState.setBuyer(flowSession.getCounterparty());
             securitySellState.setStatus(SELL_MATCHED);

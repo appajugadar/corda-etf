@@ -46,9 +46,9 @@ public class IntegrationTest {
 
         Party ap2 = new Party(new CordaX500Name("AP2", "London", "GB"), entropyToKeyPair(BigInteger.valueOf(50)).getPublic());
 
-        Party depository = new Party(new CordaX500Name("DEPOSITORY", "London", "GB"), entropyToKeyPair(BigInteger.valueOf(70)).getPublic());
+        Party depository = new Party(new CordaX500Name("DTCC", "London", "GB"), entropyToKeyPair(BigInteger.valueOf(70)).getPublic());
 
-        Party regulator = new Party(new CordaX500Name("Regulator", "London", "GB"), entropyToKeyPair(BigInteger.valueOf(90)).getPublic());
+        Party regulator = new Party(new CordaX500Name("FCA", "London", "GB"), entropyToKeyPair(BigInteger.valueOf(90)).getPublic());
 
 
         Set<ServiceInfo> notaryServices = ImmutableSet.of(new ServiceInfo(SimpleNotaryService.Companion.getType(), null));

@@ -10,7 +10,13 @@
       <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
       <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
 </head>
-
+<style>
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;border: 1px solid black;
+    width: 100%;
+}
+</style>
 
 <br><br><p/>
 <h1 class="greeting-id">Party : </h1>
@@ -19,10 +25,9 @@
     <pre></pre>
 </div>
 <div class="cash-balance-container">
-    <h3>Self Issue Cash</h3>
-    <div class="row col-md-4 table-responsive">
-        <form id="rest-form" method="post" name="rest-form">
-            <table>
+    <div>
+            <table style="float: left; width:50%;border-collapse: collapse;border: 1px solid black;">
+                <caption>Self Issue Cash</caption>
                 <tr>
                     <td>Currency</td>
                     <td><input name="currency" type="text" /></td>
@@ -36,16 +41,8 @@
                     <td><button type="submit" id="cashIssueButton">Submit</button></td>
                 </tr>
             </table>
-        </form>
-    </div>
-</div>
-<br><br><p/><br><br><p/>
-
-<div class="security-issue-container">
-    <h3>Self Issue ETF</h3>
-    <div class="row col-md-4 table-responsive">
-        <form action="securityIssue" method="post" name="securityIssueForm">
-            <table>
+            <table  style="float: left; width:50%">
+                <caption>Self Issue ETF</caption>
                 <tr>
                     <td>ETF Name</td>
                     <td><input name="securityName" type="text" /></td>
@@ -56,19 +53,59 @@
                 </tr>
                 <tr>
                     <td></td>
-                    <td><button type="submit">Submit</button></td>
+                    <td><button type="submit" id="securityIssueButton">Submit</button></td>
                 </tr>
             </table>
-        </form>
     </div>
 </div>
 
-<br><br><p/><br><br><p/>
+
+
+<br><br><p/><br><br><p/><br><br><p/><br><br><p/>
+
+<div class="cash-balance-container">
+    <div>
+        <table style="float: left; width:50%">
+            <caption>Buy ETF</caption>
+            <tr>
+                <td>ETF Name</td>
+                <td><input name="buysecurityName" type="text" /></td>
+            </tr>
+            <tr>
+                <td>Quantity</td>
+                <td><input name="buyquantity" type="text" /></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><button type="submit" id="buyButton">Submit</button></td>
+            </tr>
+        </table>
+
+        <table style="float: left; width:50%">
+            <caption>Sell ETF</caption>
+            <tr>
+                <td>ETF Name</td>
+                <td><input name="sellsecurityName" type="text" /></td>
+            </tr>
+            <tr>
+                <td>Quantity</td>
+                <td><input name="sellquantity" type="text" /></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><button type="submit" id="sellButton">Submit</button></td>
+            </tr>
+        </table>
+
+    </div>
+</div>
+
+<br><br><p/><br><br><p/><br><br><p/><br><br><p/>
 	<div class="cash-balance-container">
-		<h1>Cash Balance</h1>
-			<div class="row col-md-4 table-responsive">
-				<table id="cashBalanceTable" class="table table-bordered table-hover">
-					<thead>
+			<div>
+				<table id="cashBalanceTable" style="float: left; width:50%;border-collapse: collapse;border: 1px solid black;">
+                    <caption>Cash Balance</caption>
+                    <thead>
 						<tr>
 							<th>Currency</th>
 							<th>Balance</th>
@@ -77,26 +114,22 @@
 					<tbody>
 					</tbody>
 				</table>
+                <table id="securityBalanceTable" style="float: left; width:50%;border-collapse: collapse;border: 1px solid black;">
+                    <caption>Security Balance</caption>
+                    <thead>
+                    <tr>
+                        <th>SecurityName</th>
+                        <th>Balance</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
 			</div>
 	</div>
-<br><br><p/><br><br><p/>
-	<div class="security-balance-container">
-		<h1>Security Balance</h1>
-		<div class="row col-md-4 table-responsive">
-			<table id="securityBalanceTable" class="table table-bordered table-hover">
-				<thead>
-				<tr>
-					<th>SecurityName</th>
-					<th>Balance</th>
-				</tr>
-				</thead>
-				<tbody>
-				</tbody>
-			</table>
-		</div>
-	</div>
+<br><br><p/><br><br><p/><br><br><p/><br><br><p/>
 
-<br><br><p/><br><br><p/>
+
 <div class="buy-request-container">
     <h1>Buy Requests</h1>
     <div class="row col-md-7 table-responsive">

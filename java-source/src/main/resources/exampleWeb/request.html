@@ -1,0 +1,71 @@
+<!DOCTYPE HTML>
+ 
+<html>
+<head>
+      <title>Trade Processing with block chain</title>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	  <script src="jqueryAjaxGet.js"></script>
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
+</head>
+<style>
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;border: 1px solid black;
+    width: 100%;
+}
+</style>
+
+<br><br><p/>
+<h1 class="greeting-id">Party : </h1>
+<br><br><p/>
+<div id="response">
+    <pre></pre>
+</div>
+
+<div class="buy-request-container">
+    <h1>Buy Requests</h1>
+    <div class="row col-md-7 table-responsive">
+        <table id="buyRequestTable" class="table table-bordered table-hover">
+            <thead>
+            <tr>
+                <th>Id</th>
+                <th>SecurityName</th>
+                <th>Quantity</th>
+                <th>Buyer</th>
+                <th>Seller</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<br><br><p/><br><br><p/>
+
+<div class="buy-request-container">
+    <h1>Sell Requests</h1>
+    <div class="row col-md-7 table-responsive">
+        <table id="sellRequestTable" class="table table-bordered table-hover">
+            <thead>
+            <tr>
+                <th>Id</th>
+                <th>SecurityName</th>
+                <th>Quantity</th>
+                <th>Buyer</th>
+                <th>Seller</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>
